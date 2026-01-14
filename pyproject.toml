@@ -1,0 +1,29 @@
+[tool.poetry]
+package-mode = false
+name = "swe_dhbw"
+version = "0.1.0"
+description = "Desktop application for managing Moodle courses with AI support."
+authors = ["Anatolii Maslov", "Kilian Vogler"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+# GUI
+PyQt6 = "^6.6.0"
+# Database
+SQLAlchemy = "^2.0.0"
+# Network & API
+requests = "^2.31.0"
+# AI & LLM
+ollama = "^0.1.6"
+# Utils
+pydantic = "^2.5.0"
+cryptography = "^41.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.9.0"
+pylint = "^3.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
