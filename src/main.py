@@ -1,17 +1,8 @@
-import sys
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget
+from src.Controller.LoginController import LoginController
+
 
 def main():
-    app = QApplication(sys.argv)
-    window = QWidget()
-    window.setWindowTitle('StudyAssistant - MVP Start')
-    window.setGeometry(100, 100, 400, 200)
-    
-    label = QLabel('StudyAssistant is initializing...', parent=window)
-    label.move(100, 80)
-    
-    window.show()
-    sys.exit(app.exec())
+    LoginController()
 
 if __name__ == "__main__":
     main()
