@@ -8,16 +8,16 @@ class LoginController:
         self.app = QApplication.instance() or QApplication(sys.argv)
         self.oberflaeche = Hauptoberflaeche()
 
-    def starteLoginProzess(self):
+    def starte_login_prozess(self):
         print("starte LoginProzess")
         self.oberflaeche.anzeigen()
         sys.exit(self.app.exec())
 
-    def pruefeLogin(self):
+    def pruefe_login(self):
         print("pruefeLogin")
 
-    def starteSitzung(self):
+    def starte_sitzung(self):
         print("starteSitzung")
 
-    def zeigeFehler(self):
+    def zeige_fehler(self):
         print("zeigeFehler")
