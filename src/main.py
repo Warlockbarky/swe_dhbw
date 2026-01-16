@@ -2,7 +2,8 @@ from src.Controller.LoginController import LoginController
 
 
 def main():
-    LoginController()
+    lc = LoginController()
+    lc.starteLoginProzess()
 
 if __name__ == "__main__":
     main()

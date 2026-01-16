@@ -1,18 +1,23 @@
+import sys
+from PyQt6.QtWidgets import QApplication
 from src.View.Hauptoberflaeche import Hauptoberflaeche
 
 
 class LoginController:
-    Oberflaeche = Hauptoberflaeche()
     def __init__(self):
-        login_status = False
-        fehlermeldung = ""
-        self.starteLoginProzess()
+        self.app = QApplication.instance() or QApplication(sys.argv)
+        self.oberflaeche = Hauptoberflaeche()
+
     def starteLoginProzess(self):
         print("starte LoginProzess")
-        self.Oberflaeche.anzeigen()
+        self.oberflaeche.anzeigen()
+        sys.exit(self.app.exec())
+
     def pruefeLogin(self):
         print("pruefeLogin")
+
     def starteSitzung(self):
         print("starteSitzung")
+
     def zeigeFehler(self):
         print("zeigeFehler")
