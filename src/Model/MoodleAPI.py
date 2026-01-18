@@ -1,3 +1,5 @@
+# TODO: implement all methods
+# but right now not possible. Have to wait for Mr Wanninger
 from moodle import Moodle
 class MoodleAPI:
     api_url=""
@@ -5,7 +7,6 @@ class MoodleAPI:
     kursListe=[]
     def __init__(self):
         print("MoodleAPI")
-
     def sende_anfragen(self):
         print("sendeAnfragen")
     def empfange_antwort(self):

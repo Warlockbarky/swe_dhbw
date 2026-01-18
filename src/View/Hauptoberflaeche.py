@@ -1,13 +1,13 @@
-from PyQt6.QtWidgets import QWidget, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 class Hauptoberflaeche(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("StudyAssistant - MVP Start")
-        self.setGeometry(100, 100, 400, 200)
+        self.setWindowTitle("StudyAssistant")
+        self.resize(400, 300)
+        self.layout = QVBoxLayout(self)
 
-        label = QLabel("StudyAssistant is initializing...", self)
-        label.move(100, 80)
-
-    def anzeigen(self):
-        self.show()
+    def setInhalt(self, widget: QWidget):
+        while self.layout.count():
+            self.layout.takeAt(0).widget().deleteLater()
+        self.layout.addWidget(widget)
