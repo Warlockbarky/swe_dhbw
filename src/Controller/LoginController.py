@@ -20,16 +20,23 @@ class LoginController:
         self.start_view.deleteLater()
         self.start_view = None
         self.login_view.show_UI()
-    def exit(self):
+        self.login_view.get_btn_login().clicked.connect(self.__on_login_clicked)
+    def __on_login_clicked(self):
+        print("onLoginClicked")
+        if self.__pruefe_login():
+            self.__starte_sitzung()
+        else: self.__zeige_fehler()
+    def __exit(self):
         print("beenden des Programms")
         sys.exit(self.app.exec())
-    def pruefe_login(self):
+    def __pruefe_login(self):
         print("pruefeLogin")
-        # Return True just for demo purposes. Function will be implemented later
+        # Hier würden gewissen Moodle API Aufrufe stattfinden, allerdings ist dies aktuell nicht möglich
+        # True zurückgeben, damit trotzdem weitergearbeitet werden kann
         return True
 
-    def starte_sitzung(self):
+    def __starte_sitzung(self):
         print("starteSitzung")
 
-    def zeige_fehler(self):
+    def __zeige_fehler(self):
         print("zeigeFehler")

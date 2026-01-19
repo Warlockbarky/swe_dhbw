@@ -8,6 +8,8 @@ class LoginView(Hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self.btn_login = None
+        self.username = None
+        self.password = None
         self.__login_fenster_erstellen()
 
     def __login_fenster_erstellen(self):
@@ -25,7 +27,13 @@ class LoginView(Hauptoberflaeche):
         layout.addRow("Benutzername", username)
         layout.addRow("Passwort", password)
 
-        btn_login = QPushButton("Login")
-        layout.addRow(btn_login)
+        self.btn_login = QPushButton("Login")
+        layout.addRow(self.btn_login)
         return layout
+    def get_username(self):
+        return self.username
+    def get_password(self):
+        return self.password
+    def get_btn_login(self):
+        return self.btn_login
 
