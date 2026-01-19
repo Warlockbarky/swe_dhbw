@@ -8,7 +8,6 @@ class Hauptoberflaeche(QWidget):
         if title:
             self.root.addWidget(QLabel(title))
     def show_error(self, msg: str):
-        # optional shared helper
         print("ERROR:", msg)
     def show_UI(self):
         self.show()
