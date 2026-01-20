@@ -1,10 +1,12 @@
 import sys
+from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 
 from View.LoginView import LoginView
 from View.MenueView import MenueView
 from View.PfadView import PfadView
 
+import Model.Fehlertyp
 
 class LoginController:
     def __init__(self):
@@ -28,7 +30,9 @@ class LoginController:
         print("onLoginClicked")
         if self.__pruefe_login():
             self.__starte_pfad_auswahl()
-        else: self.__zeige_fehler()
+        else:
+            fehlertyp = Model.Fehlertyp.LoginFehler
+            self.__zeige_fehler(fehlertyp)
     def __exit(self):
         print("beenden des Programms")
         sys.exit(self.app.exec())
@@ -47,6 +51,19 @@ class LoginController:
 
     def __pruefe_pfad(self):
         print("pruefePfad")
-        self.pfad_pruefen = self.pfad_view.get_path()
-    def __zeige_fehler(self):
-        print("zeigeFehler")
+        pfad_str = self.pfad_view.get_path()
+        p = Path(pfad_str).expanduser()
+
+        if p.is_dir():
+            print("Es kann weitergehen, der Pfad ist ein Ordner")
+        elif p.is_file():
+            print("Bitte ändern Sie den Pfad in einen Ordner")
+            fehlertyp = Model.Fehlertyp.PfadFehler
+            self.__zeige_fehler(fehlertyp)
+        else:
+            print("Ihr Pfad ist nicht korrekt")
+            fehlertyp = Model.Fehlertyp.PfadFehler
+            self.__zeige_fehler(fehlertyp)
+
+    def __zeige_fehler(self, fehlertyp: Model.Fehlertyp):
+        print("Fehler:", fehlertyp)
