@@ -29,8 +29,6 @@ class PfadView(Hauptoberflaeche):
         if folder:
             self.path_edit.setText(folder)
     def get_path(self):
-        return self.path_edit.text()
+        return self.path_edit.text().strip()
     def get_btn_ok(self):
         return self.btn_ok
-
-
