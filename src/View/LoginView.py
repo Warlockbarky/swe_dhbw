@@ -18,6 +18,7 @@ class LoginView(Hauptoberflaeche):
         self.setFixedSize(600, 300)
         # Setze Fenstergröße fest und nicht vergrößer/verkleinerbar
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.mittig_auf_bildschirm()
     def __formular_erstellen(self):
         layout = QFormLayout()
         username = QLineEdit()

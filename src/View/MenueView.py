@@ -18,14 +18,7 @@ class MenueView(Hauptoberflaeche):
         # Setze Fenstergröße fest und nicht vergrößer/verkleinerbar
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.__oberflaeche_bauen()
-        self.__mittig_auf_bildschirm()
-
-    def __mittig_auf_bildschirm(self):
-        screen = QApplication.primaryScreen().availableGeometry()
-        self.move(
-            (screen.width() - self.width()) // 2,
-            (screen.height() - self.height()) // 2
-        )
+        self.mittig_auf_bildschirm()
     def __oberflaeche_bauen(self):
         self.root.addStretch()
         self.root.addWidget(self.btn_start, alignment=Qt.AlignmentFlag.AlignCenter)

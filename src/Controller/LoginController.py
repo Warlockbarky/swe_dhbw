@@ -3,12 +3,15 @@ from PyQt6.QtWidgets import QApplication
 
 from View.LoginView import LoginView
 from View.MenueView import MenueView
+from View.PfadView import PfadView
+
 
 class LoginController:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.start_view = MenueView()
         self.login_view = LoginView()
+        self.pfad_view = PfadView()
 
     def run(self):
         self.start_view.get_btn_start().clicked.connect(self.__starte_login)
@@ -24,7 +27,7 @@ class LoginController:
     def __on_login_clicked(self):
         print("onLoginClicked")
         if self.__pruefe_login():
-            self.__starte_sitzung()
+            self.__starte_pfad_auswahl()
         else: self.__zeige_fehler()
     def __exit(self):
         print("beenden des Programms")
@@ -35,8 +38,15 @@ class LoginController:
         # True zurückgeben, damit trotzdem weitergearbeitet werden kann
         return True
 
-    def __starte_sitzung(self):
-        print("starteSitzung")
+    def __starte_pfad_auswahl(self):
+        print("pfad auswählen")
+        self.login_view.deleteLater()
+        self.login_view = None
+        self.pfad_view.show_UI()
+        self.pfad_view.get_btn_ok().clicked.connect(self.__pruefe_pfad)
 
+    def __pruefe_pfad(self):
+        print("pruefePfad")
+        self.pfad_pruefen = self.pfad_view.get_path()
     def __zeige_fehler(self):
         print("zeigeFehler")
