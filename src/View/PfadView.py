@@ -20,6 +20,7 @@ class PfadView(Hauptoberflaeche):
         self.root.addWidget(self.btn_browse)
         self.root.addWidget(self.btn_ok)
         self.mittig_auf_bildschirm()
+        self.fenstergrößen_fixierung()
     def __update_ok_button(self, text: str):
         self.btn_ok.setEnabled(bool(text.strip()))
     def __browse(self):

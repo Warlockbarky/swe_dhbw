@@ -1,4 +1,4 @@
-from src.Controller.LoginController import LoginController
+from Controller.LoginController import LoginController
 
 
 if __name__ == "__main__":
