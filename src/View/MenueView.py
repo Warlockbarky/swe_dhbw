@@ -14,7 +14,6 @@ class MenueView(Hauptoberflaeche):
     def __menue_fenster_erstellen(self):
         self.btn_start = QPushButton("Start")
         self.btn_stop = QPushButton("Stop")
-        self.fenstergrößen_fixierung()
         self.__oberflaeche_bauen()
         self.mittig_auf_bildschirm()
     def __oberflaeche_bauen(self):

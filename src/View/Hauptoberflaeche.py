@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 
 
@@ -13,10 +14,7 @@ class Hauptoberflaeche(QWidget):
             (screen.width() - self.width()) // 2,
             (screen.height() - self.height()) // 2
         )
-    def fenstergrößen_fixierung(self):
-        self.setFixedSize(600, 300)
-        # Setze Fenstergröße fest und nicht vergrößer/verkleinerbar
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
     def show_error(self, msg: str):
         print("ERROR:", msg)
     def show_UI(self):
