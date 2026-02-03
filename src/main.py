@@ -1,5 +1,5 @@
-from Controller.LoginController import LoginController
+from Controller.FlowController import FlowController
 
 
 if __name__ == "__main__":
-    LoginController().run()
+    FlowController().run()

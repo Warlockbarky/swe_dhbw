@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 
 from Controller.BackupManager import BackupManager
@@ -9,7 +8,7 @@ from View.PfadView import PfadView
 
 import Model.Fehlertyp
 
-class LoginController:
+class FlowController:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.start_view = MenueView()
@@ -59,24 +58,6 @@ class LoginController:
             return False
         # Hier würden Moodle API Aufrufe stattfinden
         return True
-
-    def __starte_pfad_auswahl(self):
-        print("pfad auswählen")
-        self.stack.setCurrentWidget(self.pfad_view)
-
-    def __pruefe_pfad(self):
-        print("pruefePfad")
-        pfad_str = self.pfad_view.get_path()
-        p = Path(pfad_str).expanduser()
-        if p.is_dir():
-            print("Es kann weitergehen, der Pfad ist ein Ordner")
-            # hier
-        elif p.is_file():
-            print("Bitte ändern Sie den Pfad in einen Ordner")
-            self.__zeige_fehler(Model.Fehlertyp.PfadFehler)
-        else:
-            print("Ihr Pfad ist nicht korrekt")
-            self.__zeige_fehler(Model.Fehlertyp.PfadFehler)
 
     def __zeige_fehler(self, fehlertyp: Model.Fehlertyp, details: str = ""):
         print("Fehler:", fehlertyp, details)
