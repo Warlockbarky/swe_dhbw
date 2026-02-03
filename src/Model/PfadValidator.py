@@ -1,22 +1,29 @@
 from pathlib import Path
-import Model.Fehlertyp
+import os
+import Model.Fehlertyp as Fehlertyp
+
 class PfadValidator:
-    def __init__(self):
-        print("PfadValidator")
-    def pruefe_schreibrechte(self):
-        print("pruefeSchreibrechte")
-    def pruefe_speicherplatz(self):
-        print("pruefeSpeicherplatz")
-    def pruefe_pfad(self):
-        print("pruefePfad")
-        pfad_str = self.pfad_view.get_path()
-        p = Path(pfad_str).expanduser()
-        if p.is_dir():
-            print("Es kann weitergehen, der Pfad ist ein Ordner")
-            # hier
-        elif p.is_file():
-            print("Bitte ändern Sie den Pfad in einen Ordner")
-            self.__zeige_fehler(Model.Fehlertyp.PfadFehler)
-        else:
-            print("Ihr Pfad ist nicht korrekt")
-            self.__zeige_fehler(Model.Fehlertyp.PfadFehler)
+    def pruefe_pfad(self, p: Path):
+        if not p.exists() or not p.is_dir():
+            return False, Fehlertyp.PfadFehler, "Pfad existiert nicht oder ist kein Ordner."
+        return True, None, ""
+
+    def pruefe_schreibrechte(self, p: Path):
+        try:
+            test = p / ".write_test"
+            test.touch(exist_ok=True)
+            test.unlink()
+            return True, None, ""
+        except Exception:
+            return False, Fehlertyp.SchreibrechteFehler, "Keine Schreibrechte im Zielordner."
+
+    def pruefe_speicherplatz(self, p: Path, min_bytes: int = 100 * 1024 * 1024):
+        # 100 MB default
+        try:
+            stat = os.statvfs(str(p))
+            free = stat.f_bavail * stat.f_frsize
+            if free < min_bytes:
+                return False, Fehlertyp.SpeicherplatzFehler, "Zu wenig freier Speicherplatz."
+            return True, None, ""
+        except Exception:
+            return False, Fehlertyp.SpeicherplatzFehler, "Speicherplatz konnte nicht geprüft werden."
