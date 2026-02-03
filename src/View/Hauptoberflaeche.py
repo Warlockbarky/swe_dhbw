@@ -3,8 +3,9 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 
 
 class Hauptoberflaeche(QWidget):
-    def __init__(self, title: str = ""):
+    def __init__(self, title: str = "", width: int = 400, height: int = 300):
         super().__init__()
+        self.setFixedSize(width, height)
         self.root = QVBoxLayout(self)
         if title:
             self.root.addWidget(QLabel(title))
