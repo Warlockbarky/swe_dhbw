@@ -46,7 +46,7 @@ class FlowController:
         self.stack.setCurrentWidget(self.login_view)
 
     def __on_login_clicked(self):
-        # hier echte Prüfung später
+        # TODO: hier echte Prüfung später
         self.stack.setCurrentWidget(self.pfad_view)
 
     def __on_pfad_ok(self):
