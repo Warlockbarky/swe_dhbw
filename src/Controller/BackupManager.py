@@ -1,13 +1,42 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
 from Controller.DateiManager import DateiManager
 
 
+@dataclass(frozen=True)
+class BackupResult:
+    ok: bool
+    ziel_datei: Path | None = None
+    msg: str = ""
+    error: Exception | None = None
+
+
 class BackupManager:
+    # Später: moodle_client hier rein (oder per Setter), aktuell nur Demo.
     def __init__(self, datei_manager: DateiManager):
         self._dm = datei_manager
 
-    def starte_backup(self):
-        ziel = self._dm.get_zielpfad()
-        print("Backup nach:", ziel)
+    def starte_backup(self) -> BackupResult:
+        try:
+            zielordner = self._dm.get_zielpfad()
+        except Exception as e:
+            return BackupResult(False, None, "Zielpfad ist nicht gesetzt/validiert.", e)
 
-        # Demo: schreiben
-        self._dm.speichere_datei("test.txt", b"backup gestartet")
+        try:
+            # Demo-Dateiname mit Timestamp, damit nicht überschrieben wird
+            ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            rel_name = f"backup_{ts}.txt"
+
+            content = (
+                f"Backup gestartet am {datetime.now().isoformat(timespec='seconds')}\n"
+                f"Zielordner: {zielordner}\n"
+            ).encode("utf-8")
+
+            ziel_datei = self._dm.speichere_datei(rel_name, content)
+            return BackupResult(True, ziel_datei, "Backup (Demo) geschrieben.")
+        except Exception as e:
+            return BackupResult(False, None, "Backup konnte nicht geschrieben werden.", e)
