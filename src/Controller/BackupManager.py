@@ -27,6 +27,7 @@ class BackupManager:
 
         try:
             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            # TODO: richtige Datei Backupen (aktuell nur Testdatei)
             rel_name = f"backup_{ts}.txt"
 
             content = (
