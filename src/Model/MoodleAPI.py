@@ -4,7 +4,7 @@ from moodle import Moodle
 class MoodleAPI:
     api_url=""
     timeout=0
-    kursListe=[]
+    kurs_liste=[]
     def __init__(self):
         print("MoodleAPI")
     def sende_anfragen(self):
