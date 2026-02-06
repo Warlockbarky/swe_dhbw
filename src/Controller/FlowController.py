@@ -23,7 +23,6 @@ class FlowController:
         self.stack.addWidget(self.pfad_view)
 
         # Controller/Model verdrahten
-        self.pfad_validator = PfadValidator()
         self.datei_manager = DateiManager(self.pfad_validator)
         self.backup_manager = BackupManager(self.datei_manager)
 
@@ -60,5 +59,3 @@ class FlowController:
 
         # Wenn ok -> Backup starten
         self.backup_manager.starte_backup()
-        # optional: zurück zum Menü oder Fortschrittsview
-        # self.stack.setCurrentWidget(self.start_view)

@@ -16,7 +16,6 @@ class BackupResult:
 
 
 class BackupManager:
-    # Später: moodle_client hier rein (oder per Setter), aktuell nur Demo.
     def __init__(self, datei_manager: DateiManager):
         self._dm = datei_manager
 
@@ -27,7 +26,6 @@ class BackupManager:
             return BackupResult(False, None, "Zielpfad ist nicht gesetzt/validiert.", e)
 
         try:
-            # Demo-Dateiname mit Timestamp, damit nicht überschrieben wird
             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             rel_name = f"backup_{ts}.txt"
 

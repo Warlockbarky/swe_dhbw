@@ -15,14 +15,10 @@ class PfadResult:
     msg: str = ""
 
 class DateiManager:
-    def __init__(self, validator: PfadValidator, config: Konfiguration):
-        self._validator = validator
-        self._config = config
+    def __init__(self, validator: PfadValidator):
+        self._validator = PfadValidator()
+        self.config = Konfiguration()
         self._zielpfad: Path | None = None
-
-    def oeffne_dateidialog(self, parent=None) -> Path | None:
-        pfad = QFileDialog.getExistingDirectory(parent, "Ordner auswählen")
-        return Path(pfad).expanduser().resolve() if pfad else None
 
     def setze_und_pruefe_pfad(self, pfad_str: str) -> PfadResult:
         p = Path(pfad_str).expanduser().resolve()
