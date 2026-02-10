@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 
 
 class Hauptoberflaeche(QWidget):
-    def __init__(self, title: str = "", width: int = 720, height: int = 520):
+    def __init__(self, title: str = "", width: int = 1200, height: int = 800):
         super().__init__()
         self.setObjectName("MainWindow")
         self.setMinimumSize(width, height)
