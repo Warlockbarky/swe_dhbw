@@ -23,6 +23,7 @@ class FlowController:
         self.auth_token = None
         self.file_records = []
         self.ki_analyzer = KIAnalyzer()
+        self.chat_messages = []
 
         self.start_view = MenueView()
         self.login_view = LoginView()
@@ -57,6 +58,7 @@ class FlowController:
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
+        self.datei_liste_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
 
@@ -150,6 +152,7 @@ class FlowController:
             self.file_records = self.__normalize_file_records(data)
             items = self.__format_file_labels(self.file_records)
             self.datei_liste_view.set_items(items)
+            self.chat_messages = []
             self.stack.setCurrentWidget(self.datei_liste_view)
             return
 
@@ -318,18 +321,51 @@ class FlowController:
             self.datei_liste_view.show_error("Datei enthaelt keinen lesbaren Text.")
             return
 
+        max_chars = 12000
+        trimmed = content[:max_chars]
+
+        system_msg = (
+            "You are a helpful assistant. Use the provided file context when relevant. "
+            "If the question is not about the file, answer normally."
+        )
+        context_msg = f"File name: {name}\n\nFile content:\n{trimmed}"
+        self.chat_messages = [
+            {"role": "system", "content": system_msg},
+            {"role": "user", "content": context_msg},
+        ]
+        self.datei_liste_view.clear_chat()
+
+        summary_prompt = "Bitte gib eine kurze Zusammenfassung des Dateiinhalts."
+        self.chat_messages.append({"role": "user", "content": summary_prompt})
         try:
-            results = self.ki_analyzer.analyseSkripte([(name, content)], prompt_sprache="de")
+            assistant_text = self.ki_analyzer.chat(self.chat_messages)
         except Exception as exc:  # noqa: BLE001
-            self.datei_liste_view.show_error(f"KI Summary fehlgeschlagen: {exc}")
+            self.datei_liste_view.show_error(f"KI Chat fehlgeschlagen: {exc}")
             return
 
-        if not results:
-            self.datei_liste_view.show_error("Keine KI Summary erhalten.")
+        self.chat_messages.append({"role": "assistant", "content": assistant_text})
+        self.datei_liste_view.append_chat("assistant", assistant_text)
+
+    def __on_chat_send_clicked(self):
+        if not self.chat_messages:
+            self.datei_liste_view.show_error("Bitte zuerst KI Chat starten.")
             return
 
-        summary = results[0].zusammenfassung.inhalt
-        self.datei_liste_view.set_summary(summary)
+        text = self.datei_liste_view.get_chat_input().strip()
+        if not text:
+            return
+
+        self.datei_liste_view.append_chat("user", text)
+        self.datei_liste_view.clear_chat_input()
+        self.chat_messages.append({"role": "user", "content": text})
+        try:
+            assistant_text = self.ki_analyzer.chat(self.chat_messages)
+        except Exception as exc:  # noqa: BLE001
+            self.datei_liste_view.show_error(f"KI Chat fehlgeschlagen: {exc}")
+            return
+
+        self.chat_messages.append({"role": "assistant", "content": assistant_text})
+        self.datei_liste_view.append_chat("assistant", assistant_text)
 
     def __on_pfad_ok(self):
         pfad_str = self.pfad_view.get_path()

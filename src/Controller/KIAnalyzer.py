@@ -310,6 +310,9 @@ class KIAnalyzer:
 			return "You are a strict analysis assistant. Always return valid JSON only (no Markdown)."
 		return "Du bist ein strenger Analyse-Assistent. Gib immer nur valides JSON ohne Markdown zurück."
 
+	def chat(self, messages: list[dict[str, str]], *, temperature: float = 0.2) -> str:
+		return self._call_openai_chat_messages(messages=messages, temperature=temperature)
+
 	def _call_openai_chat(self, *, system: str, user: str) -> str:
 		if not self._api_key:
 			raise ValueError(
@@ -328,6 +331,42 @@ class KIAnalyzer:
 				{"role": "user", "content": user},
 			],
 			"temperature": 1,
+		}
+
+		last_exc: Exception | None = None
+		for attempt in range(1, max(self.maxWiederholungen, 1) + 1):
+			self.aktuelleIteration = attempt
+			try:
+				resp = requests.post(url, headers=headers, json=payload, timeout=self.timeout_s)
+				if resp.status_code >= 400:
+					raise RuntimeError(f"OpenAI API HTTP {resp.status_code}: {resp.text}")
+				data = resp.json()
+				return str(data["choices"][0]["message"]["content"])
+			except Exception as exc:  # noqa: BLE001
+				last_exc = exc
+				# Exponential backoff (bounded)
+				sleep_s = min(2.0 ** (attempt - 1), 8.0)
+				time.sleep(sleep_s)
+
+		raise RuntimeError(
+			f"OpenAI API call failed after {self.maxWiederholungen} attempts: {last_exc}"
+		)
+
+	def _call_openai_chat_messages(self, *, messages: list[dict[str, str]], temperature: float) -> str:
+		if not self._api_key:
+			raise ValueError(
+				"OPENAI_API_KEY is not set. Please set the OPENAI_API_KEY environment variable to use the OpenAI API."
+			)
+
+		url = f"{self._base_url}/chat/completions"
+		headers = {
+			"Authorization": f"Bearer {self._api_key}",
+			"Content-Type": "application/json",
+		}
+		payload = {
+			"model": self._modell,
+			"messages": messages,
+			"temperature": float(temperature),
 		}
 
 		last_exc: Exception | None = None
