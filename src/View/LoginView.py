@@ -19,8 +19,12 @@ class LoginView(Hauptoberflaeche):
         self.mittig_auf_bildschirm()
     def __formular_erstellen(self):
         layout = QFormLayout()
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout.setSpacing(10)
         # Setze Passwort-Feld als Passwort-Eingabe
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.username.setPlaceholderText("Username")
+        self.password.setPlaceholderText("Password")
         layout.addRow("Benutzername", self.username)
         layout.addRow("Passwort", self.password)
 
