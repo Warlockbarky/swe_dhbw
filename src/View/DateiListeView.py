@@ -1,6 +1,6 @@
 import os
 
-from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
@@ -16,12 +16,22 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_download = QPushButton("Download")
         self.btn_delete = QPushButton("Delete")
         self.btn_ai_summary = QPushButton("KI Chat")
+        self.btn_upload.setObjectName("PrimaryButton")
+        self.btn_download.setObjectName("SecondaryButton")
+        self.btn_delete.setObjectName("DangerButton")
+        self.btn_refresh.setObjectName("GhostButton")
+        self.btn_history.setObjectName("GhostButton")
+        self.btn_settings.setObjectName("GhostButton")
+        self.btn_ai_summary.setObjectName("SecondaryButton")
         self.list_widget.setMinimumHeight(140)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
-        sidebar = QVBoxLayout()
-        sidebar.setSpacing(10)
+        sidebar_frame = QFrame()
+        sidebar_frame.setObjectName("Sidebar")
+        sidebar = QVBoxLayout(sidebar_frame)
+        sidebar.setContentsMargins(12, 12, 12, 12)
+        sidebar.setSpacing(8)
         sidebar.addWidget(self.btn_refresh)
         sidebar.addWidget(self.btn_history)
         sidebar.addWidget(self.btn_upload)
@@ -33,7 +43,7 @@ class DateiListeView(Hauptoberflaeche):
 
         content = QHBoxLayout()
         content.setSpacing(16)
-        content.addLayout(sidebar, stretch=0)
+        content.addWidget(sidebar_frame, stretch=0)
         content.addWidget(self.list_widget, stretch=1)
 
         self.root.addLayout(content)

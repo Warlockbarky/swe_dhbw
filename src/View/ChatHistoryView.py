@@ -10,6 +10,9 @@ class ChatHistoryView(Hauptoberflaeche):
         self.btn_open = QPushButton("Oeffnen")
         self.btn_delete = QPushButton("Loeschen")
         self.btn_back = QPushButton("Zurueck")
+        self.btn_open.setObjectName("PrimaryButton")
+        self.btn_delete.setObjectName("DangerButton")
+        self.btn_back.setObjectName("SecondaryButton")
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):

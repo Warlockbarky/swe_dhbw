@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
@@ -16,25 +16,54 @@ class LoginView(Hauptoberflaeche):
 
     def __login_fenster_erstellen(self):
         layout = self.__formular_erstellen()
+        self.root.addStretch()
         self.root.addLayout(layout)
+        self.root.addStretch()
         self.mittig_auf_bildschirm()
     def __formular_erstellen(self):
-        layout = QFormLayout()
-        layout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-        layout.setSpacing(10)
+        card = QFrame()
+        card.setObjectName("Card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(16, 16, 16, 16)
+        card_layout.setSpacing(12)
+
+        title = QLabel("Anmeldung")
+        title.setObjectName("SectionTitle")
+        card_layout.addWidget(title)
+
         # Setze Passwort-Feld als Passwort-Eingabe
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.username.setPlaceholderText("Username")
         self.password.setPlaceholderText("Password")
-        layout.addRow("Benutzername", self.username)
-        layout.addRow("Passwort", self.password)
+
+        label_user = QLabel("Benutzername")
+        label_user.setObjectName("FieldLabel")
+        card_layout.addWidget(label_user)
+        card_layout.addWidget(self.username)
+
+        label_pass = QLabel("Passwort")
+        label_pass.setObjectName("FieldLabel")
+        card_layout.addWidget(label_pass)
+        card_layout.addWidget(self.password)
 
         self.btn_login = QPushButton("Login")
         self.btn_register = QPushButton("Registrieren")
-        layout.addRow(self.btn_login)
-        layout.addRow(self.btn_register)
-        layout.addRow(self.remember_me)
-        return layout
+        self.btn_login.setObjectName("PrimaryButton")
+        self.btn_register.setObjectName("SecondaryButton")
+
+        actions = QHBoxLayout()
+        actions.setSpacing(8)
+        actions.addWidget(self.btn_register)
+        actions.addStretch()
+        actions.addWidget(self.btn_login)
+
+        card_layout.addLayout(actions)
+        card_layout.addWidget(self.remember_me)
+
+        wrapper = QVBoxLayout()
+        wrapper.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        wrapper.addWidget(card)
+        return wrapper
     def get_username(self):
         return self.username.text().strip()
     def get_password(self):

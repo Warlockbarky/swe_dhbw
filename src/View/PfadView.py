@@ -1,5 +1,4 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLineEdit, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
@@ -10,6 +9,8 @@ class PfadView(Hauptoberflaeche):
         self.path_edit = QLineEdit()
         self.btn_browse = QPushButton("Durchsuchen…")
         self.btn_ok = QPushButton("OK")
+        self.btn_browse.setObjectName("GhostButton")
+        self.btn_ok.setObjectName("PrimaryButton")
         self.btn_ok.setEnabled(False)
         self.__pfad_fenster_erstellen()
         self.btn_browse.clicked.connect(self.__browse)
@@ -17,9 +18,31 @@ class PfadView(Hauptoberflaeche):
     def __pfad_fenster_erstellen(self):
         print("pfadFensterErstellen")
         self.path_edit.setPlaceholderText("Pfad eingeben oder über 'Durchsuchen…' auswählen")
-        self.root.addWidget(self.path_edit)
-        self.root.addWidget(self.btn_browse)
-        self.root.addWidget(self.btn_ok)
+        card = QFrame()
+        card.setObjectName("Card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(16, 16, 16, 16)
+        card_layout.setSpacing(12)
+
+        title = QLabel("Arbeitsordner")
+        title.setObjectName("SectionTitle")
+        card_layout.addWidget(title)
+
+        label_path = QLabel("Pfad")
+        label_path.setObjectName("FieldLabel")
+        card_layout.addWidget(label_path)
+
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        row.addWidget(self.path_edit)
+        row.addWidget(self.btn_browse)
+        card_layout.addLayout(row)
+
+        card_layout.addWidget(self.btn_ok)
+
+        self.root.addStretch()
+        self.root.addWidget(card)
+        self.root.addStretch()
         self.mittig_auf_bildschirm()
     def __update_ok_button(self, text: str):
         self.btn_ok.setEnabled(bool(text.strip()))

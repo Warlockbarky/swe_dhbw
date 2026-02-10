@@ -18,7 +18,9 @@ class ChatView(Hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self.btn_back = QPushButton("Zurueck")
+        self.btn_back.setObjectName("SecondaryButton")
         self.chat_scroll = QScrollArea()
+        self.chat_scroll.setObjectName("ChatScroll")
         self.chat_scroll.setWidgetResizable(True)
         self.chat_container = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_container)
@@ -30,6 +32,7 @@ class ChatView(Hauptoberflaeche):
         self.chat_input = QLineEdit()
         self.chat_input.setPlaceholderText("Nachricht an die KI...")
         self.btn_send = QPushButton("Senden")
+        self.btn_send.setObjectName("PrimaryButton")
         self._typing_timer = QTimer(self)
         self._typing_timer.timeout.connect(self._on_typing_tick)
         self._typing_label = None
