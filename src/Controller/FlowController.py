@@ -2,6 +2,7 @@ import io
 import json
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import requests
 from PyPDF2 import PdfReader
@@ -309,6 +310,7 @@ class FlowController:
             self.current_chat_id = None
             self.chat_view.clear_chat()
             self.chat_view.clear_chat_input()
+            self.__sync_files_to_folder()
             self.stack.setCurrentWidget(self.datei_liste_view)
             return
 
@@ -415,6 +417,76 @@ class FlowController:
         self.datei_liste_view.show_error(
             f"Download fehlgeschlagen (HTTP {resp.status_code})."
         )
+
+    def __sync_files_to_folder(self):
+        target = self.__resolve_download_dir()
+        if target is None:
+            return
+
+        res = self.datei_manager.setze_und_pruefe_pfad(str(target))
+        if not res.ok:
+            self.datei_liste_view.show_error(f"{res.fehlertyp}: {res.msg}")
+            return
+
+        for record in self.file_records:
+            file_id = record.get("id")
+            if file_id is None:
+                continue
+            name = record.get("name") or f"file_{file_id}"
+            safe_name = Path(name).name or f"file_{file_id}"
+            dest = self.datei_manager.get_zielpfad() / safe_name
+            if dest.exists():
+                continue
+
+            try:
+                resp = requests.get(
+                    f"{self.api_base_url}/files/{file_id}/download",
+                    headers={"Authorization": f"Bearer {self.auth_token}"},
+                    timeout=60,
+                    stream=True,
+                )
+            except requests.RequestException as exc:
+                self.datei_liste_view.show_error(f"Download fehlgeschlagen: {exc}")
+                continue
+
+            if resp.status_code == 401:
+                self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+                self.stack.setCurrentWidget(self.login_view)
+                return
+
+            if resp.status_code != 200:
+                self.datei_liste_view.show_error(
+                    f"Download fehlgeschlagen (HTTP {resp.status_code})."
+                )
+                continue
+
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(dest, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+            except OSError as exc:
+                self.datei_liste_view.show_error(f"Datei konnte nicht gespeichert werden: {exc}")
+                continue
+
+    def __resolve_download_dir(self) -> Path | None:
+        configured = self.settings.value("files/default_dir", "", type=str).strip()
+        candidates = []
+        if configured:
+            candidates.append(Path(configured))
+        candidates.append(Path.home() / "Downloads")
+
+        for candidate in candidates:
+            try:
+                candidate = candidate.expanduser().resolve()
+            except Exception:
+                continue
+            if candidate.exists() and candidate.is_dir():
+                return candidate
+
+        self.datei_liste_view.show_error("Kein gueltiger Download-Ordner gefunden.")
+        return None
 
     def __on_upload_clicked(self):
         if not self.auth_token:
