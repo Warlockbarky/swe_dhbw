@@ -1,6 +1,8 @@
+import io
 import sys
 
 import requests
+from PyPDF2 import PdfReader
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 
 from View.MenueView import MenueView
@@ -11,6 +13,7 @@ from View.DateiListeView import DateiListeView
 from Model.PfadValidator import PfadValidator
 from Controller.DateiManager import DateiManager
 from Controller.BackupManager import BackupManager
+from Controller.KIAnalyzer import KIAnalyzer
 
 class FlowController:
     def __init__(self):
@@ -19,6 +22,7 @@ class FlowController:
         self.api_base_url = "http://localhost:8000"
         self.auth_token = None
         self.file_records = []
+        self.ki_analyzer = KIAnalyzer()
 
         self.start_view = MenueView()
         self.login_view = LoginView()
@@ -52,6 +56,7 @@ class FlowController:
 
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
+        self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
 
@@ -250,6 +255,81 @@ class FlowController:
         self.datei_liste_view.show_error(
             f"Download fehlgeschlagen (HTTP {resp.status_code})."
         )
+
+    def __on_ai_summary_clicked(self):
+        if not self.auth_token:
+            self.datei_liste_view.show_error("Bitte zuerst einloggen.")
+            return
+
+        idx = self.datei_liste_view.get_selected_index()
+        if idx < 0 or idx >= len(self.file_records):
+            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
+            return
+
+        record = self.file_records[idx]
+        file_id = record.get("id")
+        if file_id is None:
+            self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
+            return
+
+        try:
+            resp = requests.get(
+                f"{self.api_base_url}/files/{file_id}/download",
+                headers={"Authorization": f"Bearer {self.auth_token}"},
+                timeout=30,
+            )
+        except requests.RequestException as exc:
+            self.datei_liste_view.show_error(f"Datei konnte nicht geladen werden: {exc}")
+            return
+
+        if resp.status_code == 401:
+            self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+            self.stack.setCurrentWidget(self.login_view)
+            return
+
+        if resp.status_code == 403:
+            self.datei_liste_view.show_error("Kein Zugriff auf diese Datei.")
+            return
+
+        if resp.status_code == 404:
+            self.datei_liste_view.show_error("Datei nicht gefunden.")
+            return
+
+        if resp.status_code != 200:
+            self.datei_liste_view.show_error(
+                f"Datei konnte nicht geladen werden (HTTP {resp.status_code})."
+            )
+            return
+
+        name = record.get("name") or f"file_{file_id}"
+        content_type = resp.headers.get("Content-Type", "").lower()
+        if name.lower().endswith(".pdf") or content_type.startswith("application/pdf"):
+            try:
+                reader = PdfReader(io.BytesIO(resp.content))
+                pages = [(page.extract_text() or "").strip() for page in reader.pages]
+                content = "\n".join([p for p in pages if p])
+            except Exception as exc:  # noqa: BLE001
+                self.datei_liste_view.show_error(f"PDF konnte nicht gelesen werden: {exc}")
+                return
+        else:
+            content = resp.content.decode("utf-8", errors="replace")
+
+        if not content.strip():
+            self.datei_liste_view.show_error("Datei enthaelt keinen lesbaren Text.")
+            return
+
+        try:
+            results = self.ki_analyzer.analyseSkripte([(name, content)], prompt_sprache="de")
+        except Exception as exc:  # noqa: BLE001
+            self.datei_liste_view.show_error(f"KI Summary fehlgeschlagen: {exc}")
+            return
+
+        if not results:
+            self.datei_liste_view.show_error("Keine KI Summary erhalten.")
+            return
+
+        summary = results[0].zusammenfassung.inhalt
+        self.datei_liste_view.set_summary(summary)
 
     def __on_pfad_ok(self):
         pfad_str = self.pfad_view.get_path()

@@ -59,11 +59,33 @@ class KIAnalyzer:
 		self.schwellwert = float(schwellwert)
 		self.timeout_s = float(timeout_s)
 
+		self._load_dotenv()
 		self._api_key = os.getenv("OPENAI_API_KEY", "").strip()
 		self._base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
 		self._modell = (modell or os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip()
 
 		self._fehlerprotokoll = Fehlerprotokoll(datum=datetime.now())
+
+	def _load_dotenv(self) -> None:
+		candidates = [Path.cwd() / ".env", Path(__file__).resolve().parents[2] / ".env"]
+		for path in candidates:
+			if not path.exists():
+				continue
+			try:
+				for line in path.read_text(encoding="utf-8").splitlines():
+					text = line.strip()
+					if not text or text.startswith("#"):
+						continue
+					if "=" not in text:
+						continue
+					key, value = text.split("=", 1)
+					key = key.strip()
+					value = value.strip().strip("\"'")
+					if key and key not in os.environ:
+						os.environ[key] = value
+			except OSError:
+				return
+			return
 
 	def analyseSkripte(
 		self,
@@ -305,7 +327,7 @@ class KIAnalyzer:
 				{"role": "system", "content": system},
 				{"role": "user", "content": user},
 			],
-			"temperature": 0.2,
+			"temperature": 1,
 		}
 
 		last_exc: Exception | None = None
