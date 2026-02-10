@@ -8,6 +8,7 @@ class LoginView(Hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self.btn_login = None
+        self.btn_register = None
         self.username = QLineEdit()
         self.password = QLineEdit()
         self.__login_fenster_erstellen()
@@ -24,7 +25,9 @@ class LoginView(Hauptoberflaeche):
         layout.addRow("Passwort", self.password)
 
         self.btn_login = QPushButton("Login")
+        self.btn_register = QPushButton("Registrieren")
         layout.addRow(self.btn_login)
+        layout.addRow(self.btn_register)
         return layout
     def get_username(self):
         return self.username.text().strip()
@@ -32,3 +35,6 @@ class LoginView(Hauptoberflaeche):
         return self.password.text().strip()
     def get_btn_login(self):
         return self.btn_login
+
+    def get_btn_register(self):
+        return self.btn_register
