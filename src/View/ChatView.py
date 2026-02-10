@@ -154,6 +154,8 @@ class ChatView(Hauptoberflaeche):
         bubble.setProperty("role", role)
         bubble_layout = QVBoxLayout(bubble)
         bubble_layout.setContentsMargins(12, 8, 12, 8)
+        bubble_layout.setSpacing(0)
+        bubble.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
         view = QTextBrowser()
         view.setProperty("role", role)
@@ -161,15 +163,13 @@ class ChatView(Hauptoberflaeche):
         view.setFrameShape(QFrame.Shape.NoFrame)
         view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        view.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        view.setContentsMargins(0, 0, 0, 0)
+        view.document().setDocumentMargin(0)
         view.document().contentsChanged.connect(
             lambda v=view: self._sync_message_size(v)
         )
         bubble_layout.addWidget(view)
-
-        if role == "assistant":
-            bubble.setMaximumWidth(700)
-            view.setMaximumWidth(680)
 
         row = QHBoxLayout()
         row.setSpacing(8)
@@ -186,30 +186,42 @@ class ChatView(Hauptoberflaeche):
 
     @staticmethod
     def _sync_message_size(view: QTextBrowser):
-        doc_height = int(view.document().size().height())
         doc_width = int(view.document().idealWidth())
         margins = view.contentsMargins()
         padding = margins.top() + margins.bottom()
         extra = view.frameWidth() * 2
-        viewport_width = view.viewport().width()
-        if viewport_width <= 0:
-            viewport_width = view.maximumWidth() if view.maximumWidth() > 0 else doc_width
-        if viewport_width > 0:
-            view.document().setTextWidth(viewport_width)
-            doc_height = int(view.document().size().height())
-        view.setMinimumHeight(doc_height + padding + extra + 6)
 
         role = view.property("role")
-        if role == "user":
+        if role == "assistant":
+            min_width = 220
+            max_width = 700
+        else:
             min_width = 180
             max_width = 520
-            target_width = max(min_width, min(max_width, doc_width + 24))
-            view.setMinimumWidth(target_width)
-            view.setMaximumWidth(target_width)
-            bubble = view.parentWidget()
-            if bubble is not None:
-                bubble.setMinimumWidth(target_width + 24)
-                bubble.setMaximumWidth(target_width + 24)
+
+        target_width = max(min_width, min(max_width, doc_width + 24))
+        view.setMinimumWidth(target_width)
+        view.setMaximumWidth(target_width)
+        view.document().setTextWidth(target_width)
+
+        doc_height = int(view.document().documentLayout().documentSize().height())
+        target_height = doc_height + padding + extra
+        view.setMinimumHeight(target_height)
+        view.setMaximumHeight(target_height)
+
+        bubble = view.parentWidget()
+        if bubble is not None:
+            layout = bubble.layout()
+            if layout is not None:
+                margins = layout.contentsMargins()
+                bubble_padding = margins.top() + margins.bottom()
+            else:
+                bubble_padding = 16
+            bubble_height = target_height + bubble_padding
+            bubble.setMinimumHeight(bubble_height)
+            bubble.setMaximumHeight(bubble_height)
+            bubble.setMinimumWidth(target_width + 24)
+            bubble.setMaximumWidth(target_width + 24)
 
     def _start_typing(self, label: QTextBrowser, text: str, *, markdown: bool):
         self._typing_label = label
