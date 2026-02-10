@@ -809,6 +809,7 @@ class FlowController:
                 continue
             text = str(msg.get("content") or "")
             self.chat_view.add_message(role, text, stream=False)
+        self.chat_view.refresh_message_sizes()
 
     def __load_history(self) -> list[dict]:
         raw = self.settings.value("chat/history", "[]", type=str)

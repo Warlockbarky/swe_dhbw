@@ -43,6 +43,7 @@ class ChatView(Hauptoberflaeche):
         self._loading_timer.timeout.connect(self._on_loading_tick)
         self._loading_label = None
         self._loading_dots = 0
+        self._refresh_pending = False
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -113,6 +114,30 @@ class ChatView(Hauptoberflaeche):
                             child.widget().deleteLater()
                     layout.deleteLater()
 
+    def refresh_message_sizes(self):
+        self._refresh_all_message_sizes()
+        if not self._refresh_pending:
+            self._refresh_pending = True
+            QTimer.singleShot(0, self._refresh_all_message_sizes)
+
+    def _refresh_all_message_sizes(self):
+        for i in range(self.chat_layout.count() - 1):
+            item = self.chat_layout.itemAt(i)
+            if item is None:
+                continue
+            row_layout = item.layout()
+            if row_layout is None:
+                continue
+            for j in range(row_layout.count()):
+                bubble_item = row_layout.itemAt(j)
+                bubble = bubble_item.widget() if bubble_item else None
+                if bubble is None:
+                    continue
+                view = bubble.findChild(QTextBrowser)
+                if view is not None:
+                    self._sync_message_size(view)
+        self._refresh_pending = False
+
     def get_btn_send(self):
         return self.btn_send
 
@@ -138,16 +163,13 @@ class ChatView(Hauptoberflaeche):
         view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         view.document().contentsChanged.connect(
-            lambda v=view: self._sync_message_height(v)
+            lambda v=view: self._sync_message_size(v)
         )
         bubble_layout.addWidget(view)
 
         if role == "assistant":
             bubble.setMaximumWidth(700)
             view.setMaximumWidth(680)
-        else:
-            bubble.setMaximumWidth(520)
-            view.setMaximumWidth(500)
 
         row = QHBoxLayout()
         row.setSpacing(8)
@@ -159,16 +181,35 @@ class ChatView(Hauptoberflaeche):
             row.addWidget(bubble, stretch=0)
 
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, row)
-        self._sync_message_height(view)
+        self._sync_message_size(view)
         return view
 
     @staticmethod
-    def _sync_message_height(view: QTextBrowser):
+    def _sync_message_size(view: QTextBrowser):
         doc_height = int(view.document().size().height())
+        doc_width = int(view.document().idealWidth())
         margins = view.contentsMargins()
         padding = margins.top() + margins.bottom()
         extra = view.frameWidth() * 2
+        viewport_width = view.viewport().width()
+        if viewport_width <= 0:
+            viewport_width = view.maximumWidth() if view.maximumWidth() > 0 else doc_width
+        if viewport_width > 0:
+            view.document().setTextWidth(viewport_width)
+            doc_height = int(view.document().size().height())
         view.setMinimumHeight(doc_height + padding + extra + 6)
+
+        role = view.property("role")
+        if role == "user":
+            min_width = 180
+            max_width = 520
+            target_width = max(min_width, min(max_width, doc_width + 24))
+            view.setMinimumWidth(target_width)
+            view.setMaximumWidth(target_width)
+            bubble = view.parentWidget()
+            if bubble is not None:
+                bubble.setMinimumWidth(target_width + 24)
+                bubble.setMaximumWidth(target_width + 24)
 
     def _start_typing(self, label: QTextBrowser, text: str, *, markdown: bool):
         self._typing_label = label
