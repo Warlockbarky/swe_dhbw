@@ -136,7 +136,10 @@ class ChatView(Hauptoberflaeche):
         view.setFrameShape(QFrame.Shape.NoFrame)
         view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        view.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        view.document().contentsChanged.connect(
+            lambda v=view: self._sync_message_height(v)
+        )
         bubble_layout.addWidget(view)
 
         if role == "assistant":
@@ -156,7 +159,16 @@ class ChatView(Hauptoberflaeche):
             row.addWidget(bubble, stretch=0)
 
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, row)
+        self._sync_message_height(view)
         return view
+
+    @staticmethod
+    def _sync_message_height(view: QTextBrowser):
+        doc_height = int(view.document().size().height())
+        margins = view.contentsMargins()
+        padding = margins.top() + margins.bottom()
+        extra = view.frameWidth() * 2
+        view.setMinimumHeight(doc_height + padding + extra + 6)
 
     def _start_typing(self, label: QTextBrowser, text: str, *, markdown: bool):
         self._typing_label = label
