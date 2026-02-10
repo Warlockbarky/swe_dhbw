@@ -2,11 +2,11 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QPushButton,
     QScrollArea,
     QSizePolicy,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -35,6 +35,7 @@ class ChatView(Hauptoberflaeche):
         self._typing_label = None
         self._typing_text = ""
         self._typing_index = 0
+        self._typing_markdown = False
         self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(self._on_loading_tick)
         self._loading_label = None
@@ -63,9 +64,9 @@ class ChatView(Hauptoberflaeche):
         label = self._create_message_row(role)
 
         if stream and role == "assistant":
-            self._start_typing(label, text)
+            self._start_typing(label, text, markdown=True)
         else:
-            label.setText(text)
+            label.setMarkdown(text)
             self._scroll_to_bottom()
 
     def start_loading(self):
@@ -74,7 +75,7 @@ class ChatView(Hauptoberflaeche):
         label = self._create_message_row("assistant")
         self._loading_label = label
         self._loading_dots = 0
-        label.setText("...")
+        label.setPlainText("...")
         self._loading_timer.start(300)
         self._scroll_to_bottom()
 
@@ -84,7 +85,7 @@ class ChatView(Hauptoberflaeche):
             return
         label = self._loading_label
         self._stop_loading(finalize=False)
-        self._start_typing(label, text)
+        self._start_typing(label, text, markdown=True)
 
     def get_chat_input(self) -> str:
         return self.chat_input.text()
@@ -119,26 +120,28 @@ class ChatView(Hauptoberflaeche):
         self.btn_send.setEnabled(enabled)
         self.chat_input.setEnabled(enabled)
 
-    def _create_message_row(self, role: str) -> QLabel:
+    def _create_message_row(self, role: str) -> QTextBrowser:
         bubble = QFrame()
         bubble.setObjectName("chatBubble")
         bubble.setProperty("role", role)
         bubble_layout = QVBoxLayout(bubble)
         bubble_layout.setContentsMargins(12, 8, 12, 8)
 
-        label = QLabel("")
-        label.setProperty("role", role)
-        label.setWordWrap(True)
-        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        bubble_layout.addWidget(label)
+        view = QTextBrowser()
+        view.setProperty("role", role)
+        view.setOpenExternalLinks(True)
+        view.setFrameShape(QFrame.Shape.NoFrame)
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        view.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        bubble_layout.addWidget(view)
 
         if role == "assistant":
             bubble.setMaximumWidth(700)
-            label.setMaximumWidth(680)
+            view.setMaximumWidth(680)
         else:
             bubble.setMaximumWidth(520)
-            label.setMaximumWidth(500)
+            view.setMaximumWidth(500)
 
         row = QHBoxLayout()
         row.setSpacing(8)
@@ -150,13 +153,14 @@ class ChatView(Hauptoberflaeche):
             row.addWidget(bubble, stretch=0)
 
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, row)
-        return label
+        return view
 
-    def _start_typing(self, label: QLabel, text: str):
+    def _start_typing(self, label: QTextBrowser, text: str, *, markdown: bool):
         self._typing_label = label
         self._typing_text = text
         self._typing_index = 0
-        label.setText("")
+        self._typing_markdown = markdown
+        label.setPlainText("")
         self._typing_timer.start(12)
 
     def _on_typing_tick(self):
@@ -165,10 +169,13 @@ class ChatView(Hauptoberflaeche):
             return
         step = 3
         self._typing_index = min(self._typing_index + step, len(self._typing_text))
-        self._typing_label.setText(self._typing_text[: self._typing_index])
+        chunk = self._typing_text[: self._typing_index]
+        self._typing_label.setPlainText(chunk)
         self._scroll_to_bottom()
         if self._typing_index >= len(self._typing_text):
             self._typing_timer.stop()
+            if self._typing_markdown:
+                self._typing_label.setMarkdown(self._typing_text)
             self._typing_label = None
 
     def _stop_typing(self, *, finalize: bool):
@@ -176,7 +183,10 @@ class ChatView(Hauptoberflaeche):
             return
         self._typing_timer.stop()
         if finalize:
-            self._typing_label.setText(self._typing_text)
+            if self._typing_markdown:
+                self._typing_label.setMarkdown(self._typing_text)
+            else:
+                self._typing_label.setPlainText(self._typing_text)
         self._typing_label = None
 
     def _on_loading_tick(self):
@@ -185,7 +195,7 @@ class ChatView(Hauptoberflaeche):
             return
         self._loading_dots = (self._loading_dots + 1) % 4
         dots = "." * max(1, self._loading_dots)
-        self._loading_label.setText(dots)
+        self._loading_label.setPlainText(dots)
         self._scroll_to_bottom()
 
     def _stop_loading(self, *, finalize: bool):

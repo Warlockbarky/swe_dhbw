@@ -74,7 +74,12 @@ class Hauptoberflaeche(QWidget):
             QFrame#chatBubble[role="user"] QLabel {
                 color: #0f172a;
             }
-            QFrame#chatBubble QLabel {
+            QFrame#chatBubble QTextBrowser {
+                background: transparent;
+                border: 0;
+                padding: 0;
+            }
+            QFrame#chatBubble QTextBrowser * {
                 font-size: 15px;
                 line-height: 1.5;
                 background: transparent;
