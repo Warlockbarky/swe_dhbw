@@ -49,8 +49,19 @@ package "View" <<View>> {
         + get_chat_input() : String
         + clear_chat_input()
         + clear_chat()
+        + refresh_message_sizes()
         + set_send_enabled(enabled : Boolean)
         + get_btn_send()
+        + get_btn_back()
+    }
+
+    class ChatHistoryView {
+        + ChatHistoryView()
+        - __fenster_erstellen()
+        + set_items(items : List)
+        + get_selected_index() : Int
+        + get_btn_open()
+        + get_btn_delete()
         + get_btn_back()
     }
 
@@ -75,7 +86,17 @@ package "View" <<View>> {
         + mittig_auf_bildschirm()
         + show_error(msg : String)
         + show_UI()
-        - _apply_theme()
+        + apply_theme(theme : String, palette : String)
+        + build_stylesheet(theme : String, palette : String) : String
+        + build_palette(theme : String, palette : String)
+    }
+
+    class SettingsDialog {
+        + SettingsDialog(parent)
+        - __build_ui()
+        - __choose_path()
+        + set_values(values : Dict)
+        + get_values() : Dict
     }
 
     note right of Hauptoberflaeche
@@ -197,6 +218,7 @@ PfadView --|> Hauptoberflaeche
 MenueView --|> Hauptoberflaeche
 DateiListeView --|> Hauptoberflaeche
 ChatView --|> Hauptoberflaeche
+ChatHistoryView --|> Hauptoberflaeche
 
 ' View -> Controller (Benutzer initiiert Aktionen)
 LoginView ..> FlowController : nutzt
@@ -204,6 +226,7 @@ MenueView ..> FlowController : nutzt
 PfadView ..> FlowController : nutzt
 DateiListeView ..> FlowController : nutzt
 ChatView ..> FlowController : nutzt
+ChatHistoryView ..> FlowController : nutzt
 
 ' Controller -> View (Aktualisierung der Oberflaeche)
 FlowController --> LoginView : steuert
@@ -211,6 +234,8 @@ FlowController --> MenueView : steuert
 FlowController --> PfadView : steuert
 FlowController --> DateiListeView : steuert
 FlowController --> ChatView : steuert
+FlowController --> ChatHistoryView : steuert
+FlowController --> SettingsDialog : oeffnet
 
 ' Controller -> Controller (Interaktion zwischen Controllern)
 FlowController --> DateiManager : verwaltet Pfade
