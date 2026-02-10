@@ -31,10 +31,13 @@ package "View" <<View>> {
         - __fenster_erstellen()
         + set_items(items : List)
         + get_btn_refresh()
+        + get_btn_upload()
         + get_btn_download()
+        + get_btn_delete()
         + get_btn_ai_summary()
         + get_selected_index() : Int
         + prompt_save_path(name : String) : String
+        + prompt_open_file() : String
     }
 
     class ChatView {
@@ -89,17 +92,29 @@ package "Controller" <<Controller>> {
         - auth_token : String
         - file_records : List
         - chat_messages : List
+        - _chat_thread : QThread
+        - _chat_worker : _ChatWorker
         + run()
         - __on_login_clicked()
         - __on_register_clicked()
         - __load_files_and_show()
+        - __on_upload_clicked()
         - __on_download_clicked()
+        - __on_delete_clicked()
         - __on_ai_summary_clicked()
         - __on_chat_send_clicked()
         - __on_chat_back_clicked()
+        - __start_chat_worker(mode : String, payload : Dict)
+        - __on_chat_worker_finished(result : Dict)
+        - __on_chat_worker_failed(message : String)
+        - __on_chat_thread_finished()
     }
 
     class _ChatWorker {
+        - mode : String
+        - payload : Dict
+        - api_base_url : String
+        - auth_token : String
         + run()
     }
 
