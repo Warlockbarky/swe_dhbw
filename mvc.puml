@@ -1,0 +1,216 @@
+@startuml
+
+skinparam linetype ortho
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+
+' Farbeinstellungen fuer MVC
+skinparam package {
+    BackgroundColor<<Model>> #D6EAF8
+    BackgroundColor<<View>> #D5F5E3
+    BackgroundColor<<Controller>> #FCF3CF
+}
+
+title Systemklassendiagramm - MVC-Architektur
+
+' --- VIEW PAKET ---
+package "View" <<View>> {
+
+    class LoginView {
+        + LoginView()
+        - __login_fenster_erstellen()
+        - __formular_erstellen()
+        + get_username() : String
+        + get_password() : String
+        + get_btn_login()
+        + get_btn_register()
+    }
+
+    class DateiListeView {
+        + DateiListeView()
+        - __fenster_erstellen()
+        + set_items(items : List)
+        + get_btn_refresh()
+        + get_btn_download()
+        + get_btn_ai_summary()
+        + get_selected_index() : Int
+        + prompt_save_path(name : String) : String
+    }
+
+    class ChatView {
+        + ChatView()
+        - __fenster_erstellen()
+        + add_message(role : String, text : String)
+        + start_loading()
+        + stop_loading_and_stream(text : String)
+        + get_chat_input() : String
+        + clear_chat_input()
+        + clear_chat()
+        + set_send_enabled(enabled : Boolean)
+        + get_btn_send()
+        + get_btn_back()
+    }
+
+    class PfadView {
+        + PfadView()
+        - __pfad_fenster_erstellen()
+        - __update_ok_button(text : String)
+        - __browse()
+        + get_path() : String
+        + get_btn_ok()
+    }
+
+    class MenueView {
+        + MenueView()
+        - __menue_fenster_erstellen()
+        - __oberflaeche_bauen()
+        + get_btn_start()
+        + get_btn_stop()
+    }
+
+    class Hauptoberflaeche {
+        + mittig_auf_bildschirm()
+        + show_error(msg : String)
+        + show_UI()
+        - _apply_theme()
+    }
+
+    note right of Hauptoberflaeche
+      Hauptbenutzeroberflaeche,
+      die von den Controllern
+      aktualisiert wird
+    end note
+}
+
+' --- CONTROLLER PAKET ---
+package "Controller" <<Controller>> {
+    class FlowController {
+        - api_base_url : String
+        - auth_token : String
+        - file_records : List
+        - chat_messages : List
+        + run()
+        - __on_login_clicked()
+        - __on_register_clicked()
+        - __load_files_and_show()
+        - __on_download_clicked()
+        - __on_ai_summary_clicked()
+        - __on_chat_send_clicked()
+        - __on_chat_back_clicked()
+    }
+
+    class _ChatWorker {
+        + run()
+    }
+
+    class DateiManager {
+        - aktuellerPfad : String
+        - standardPfad : String
+        - zielPfad : String
+        + speicherePfad()
+        + ladePfad() : String
+        + speichereDatei(name : String)
+        + pruefePfad()
+    }
+
+    class BackupManager {
+        - backupStatus : String
+        - startZeit : DateTime
+        - endZeit : DateTime
+        + starteBackup()
+        + ladeKurse()
+        + ladeSkripte()
+        + pruefeVerbindung()
+        + speichereSkripte()
+        + protokolliereFehler()
+        + liefereSkripte() : List
+    }
+
+    class KIAnalyzer {
+        - maxWiederholungen : Int
+        - aktuelleIteration : Int
+        + analysiereSkripte()
+        + bewerteZusammenfassung()
+        + exportiereErgebnisse()
+        + chat(messages : List) : String
+    }
+}
+
+' --- MODEL PAKET ---
+package "Model" <<Model>> {
+    class PfadValidator {
+        - letzterFehler : String
+        + pruefePfad(pfad : String) : Boolean
+        + pruefeSchreibrechte(pfad : String) : Boolean
+        + pruefeSpeicherplatz(pfad : String) : Boolean
+    }
+
+    class Konfiguration {
+        - pfad : String
+        - dateiName : String
+        + speichere()
+        + lade()
+    }
+
+    class Fehlerprotokoll {
+        - datum : DateTime
+        - meldungen : List
+        + hinzufuegen()
+        + speichern()
+    }
+
+    class Zusammenfassung {
+        - id : Int
+        - inhalt : String
+        - laenge : Int
+        + anzeigen()
+    }
+
+    class Bewertung {
+        - score : Float
+        - kriteriumListe : List
+        - schwellwert : Float
+        + istUeberSchwellwert() : Boolean
+    }
+}
+
+' --- BEZIEHUNGEN (Relationships) ---
+
+' View Klassen erben von Hauptoberflaeche
+LoginView --|> Hauptoberflaeche
+PfadView --|> Hauptoberflaeche
+MenueView --|> Hauptoberflaeche
+DateiListeView --|> Hauptoberflaeche
+ChatView --|> Hauptoberflaeche
+
+' View -> Controller (Benutzer initiiert Aktionen)
+LoginView ..> FlowController : nutzt
+MenueView ..> FlowController : nutzt
+PfadView ..> FlowController : nutzt
+DateiListeView ..> FlowController : nutzt
+ChatView ..> FlowController : nutzt
+
+' Controller -> View (Aktualisierung der Oberflaeche)
+FlowController --> LoginView : steuert
+FlowController --> MenueView : steuert
+FlowController --> PfadView : steuert
+FlowController --> DateiListeView : steuert
+FlowController --> ChatView : steuert
+
+' Controller -> Controller (Interaktion zwischen Controllern)
+FlowController --> DateiManager : verwaltet Pfade
+FlowController --> BackupManager : startet Backup
+FlowController --> KIAnalyzer : startet Analyse
+FlowController --> _ChatWorker : startet Hintergrundjob
+
+DateiManager --> PfadValidator
+DateiManager --> Konfiguration
+
+BackupManager --> Fehlerprotokoll
+BackupManager --> DateiManager : nutzt
+
+KIAnalyzer --> Zusammenfassung
+KIAnalyzer --> Bewertung
+KIAnalyzer --> Fehlerprotokoll
+
+@enduml

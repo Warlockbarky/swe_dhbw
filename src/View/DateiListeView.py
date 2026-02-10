@@ -8,7 +8,9 @@ class DateiListeView(Hauptoberflaeche):
         super().__init__()
         self.list_widget = QListWidget()
         self.btn_refresh = QPushButton("Aktualisieren")
+        self.btn_upload = QPushButton("Upload")
         self.btn_download = QPushButton("Download")
+        self.btn_delete = QPushButton("Delete")
         self.btn_ai_summary = QPushButton("KI Chat")
         self.list_widget.setMinimumHeight(140)
         self.__fenster_erstellen()
@@ -17,7 +19,9 @@ class DateiListeView(Hauptoberflaeche):
         actions = QHBoxLayout()
         actions.setSpacing(10)
         actions.addWidget(self.btn_refresh)
+        actions.addWidget(self.btn_upload)
         actions.addWidget(self.btn_download)
+        actions.addWidget(self.btn_delete)
         actions.addWidget(self.btn_ai_summary)
         actions.addStretch()
 
@@ -35,6 +39,12 @@ class DateiListeView(Hauptoberflaeche):
     def get_btn_download(self):
         return self.btn_download
 
+    def get_btn_upload(self):
+        return self.btn_upload
+
+    def get_btn_delete(self):
+        return self.btn_delete
+
     def get_btn_ai_summary(self):
         return self.btn_ai_summary
 
@@ -46,6 +56,13 @@ class DateiListeView(Hauptoberflaeche):
             self,
             "Datei speichern",
             suggested_name,
+        )
+        return path
+
+    def prompt_open_file(self) -> str:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Datei hochladen",
         )
         return path
 

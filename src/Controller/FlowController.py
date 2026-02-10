@@ -4,7 +4,7 @@ import sys
 import requests
 from PyPDF2 import PdfReader
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QStackedWidget
+from PyQt6.QtWidgets import QApplication, QMessageBox, QStackedWidget
 
 from View.MenueView import MenueView
 from View.LoginView import LoginView
@@ -136,7 +136,9 @@ class FlowController:
         self.login_view.get_btn_register().clicked.connect(self.__on_register_clicked)
 
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
+        self.datei_liste_view.get_btn_upload().clicked.connect(self.__on_upload_clicked)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
+        self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
         self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
@@ -342,6 +344,101 @@ class FlowController:
         self.datei_liste_view.show_error(
             f"Download fehlgeschlagen (HTTP {resp.status_code})."
         )
+
+    def __on_upload_clicked(self):
+        if not self.auth_token:
+            self.datei_liste_view.show_error("Bitte zuerst einloggen.")
+            return
+
+        path = self.datei_liste_view.prompt_open_file()
+        if not path:
+            return
+
+        try:
+            with open(path, "rb") as f:
+                resp = requests.post(
+                    f"{self.api_base_url}/files/upload",
+                    headers={"Authorization": f"Bearer {self.auth_token}"},
+                    files={"file": f},
+                    timeout=60,
+                )
+        except OSError as exc:
+            self.datei_liste_view.show_error(f"Datei konnte nicht gelesen werden: {exc}")
+            return
+        except requests.RequestException as exc:
+            self.datei_liste_view.show_error(f"Upload fehlgeschlagen: {exc}")
+            return
+
+        if resp.status_code == 401:
+            self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+            self.stack.setCurrentWidget(self.login_view)
+            return
+
+        if resp.status_code >= 400:
+            self.datei_liste_view.show_error(
+                f"Upload fehlgeschlagen (HTTP {resp.status_code})."
+            )
+            return
+
+        self.__load_files_and_show()
+
+    def __on_delete_clicked(self):
+        if not self.auth_token:
+            self.datei_liste_view.show_error("Bitte zuerst einloggen.")
+            return
+
+        idx = self.datei_liste_view.get_selected_index()
+        if idx < 0 or idx >= len(self.file_records):
+            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
+            return
+
+        record = self.file_records[idx]
+        file_id = record.get("id")
+        if file_id is None:
+            self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
+            return
+
+        name = record.get("name") or f"file_{file_id}"
+        confirm = QMessageBox.question(
+            self.datei_liste_view,
+            "Datei loeschen",
+            f"Soll die Datei '{name}' wirklich geloescht werden?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            resp = requests.delete(
+                f"{self.api_base_url}/files/{file_id}",
+                headers={"Authorization": f"Bearer {self.auth_token}"},
+                timeout=30,
+            )
+        except requests.RequestException as exc:
+            self.datei_liste_view.show_error(f"Loeschen fehlgeschlagen: {exc}")
+            return
+
+        if resp.status_code == 401:
+            self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+            self.stack.setCurrentWidget(self.login_view)
+            return
+
+        if resp.status_code == 403:
+            self.datei_liste_view.show_error("Kein Zugriff auf diese Datei.")
+            return
+
+        if resp.status_code == 404:
+            self.datei_liste_view.show_error("Datei nicht gefunden.")
+            return
+
+        if resp.status_code >= 400:
+            self.datei_liste_view.show_error(
+                f"Loeschen fehlgeschlagen (HTTP {resp.status_code})."
+            )
+            return
+
+        self.__load_files_and_show()
 
     def __on_ai_summary_clicked(self):
         if not self.auth_token:
