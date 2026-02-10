@@ -12,7 +12,7 @@ class Hauptoberflaeche(QWidget):
         self.root.setSpacing(12)
         if title:
             self.root.addWidget(QLabel(title))
-        self._apply_theme()
+        self.apply_theme("light", "emerald")
     def mittig_auf_bildschirm(self):
         screen = QApplication.primaryScreen().availableGeometry()
         self.move(
@@ -25,82 +25,119 @@ class Hauptoberflaeche(QWidget):
     def show_UI(self):
         self.show()
 
-    def _apply_theme(self):
-        self.setStyleSheet(
-            """
-            QWidget {
-                background: #fafafa;
-                color: #0f172a;
+    @staticmethod
+    def build_stylesheet(theme: str, palette: str) -> str:
+        theme = (theme or "light").lower()
+        palette = (palette or "emerald").lower()
+
+        if theme == "dark":
+            colors = {
+                "bg": "#0b0f19",
+                "text": "#e5e7eb",
+                "muted": "#94a3b8",
+                "surface": "#111827",
+                "border": "#1f2937",
+                "bubble_user": "#1f2937",
+                "bubble_ai": "#111827",
+                "list_sel_bg": "#1f2937",
+                "list_sel_text": "#e5e7eb",
+            }
+        else:
+            colors = {
+                "bg": "#fafafa",
+                "text": "#0f172a",
+                "muted": "#64748b",
+                "surface": "#ffffff",
+                "border": "#e5e7eb",
+                "bubble_user": "#f1f5f9",
+                "bubble_ai": "#ffffff",
+                "list_sel_bg": "#dbeafe",
+                "list_sel_text": "#1e3a8a",
+            }
+
+        accents = {
+            "emerald": ("#10b981", "#0ea5a1", "#0f766e"),
+            "blue": ("#2563eb", "#1d4ed8", "#1e40af"),
+            "slate": ("#334155", "#1f2937", "#0f172a"),
+        }
+        accent, accent_hover, accent_press = accents.get(palette, accents["emerald"])
+
+        return f"""
+            QWidget {{
+                background: {colors['bg']};
+                color: {colors['text']};
                 font-family: "Segoe UI", "Helvetica Neue", Arial;
                 font-size: 15px;
-            }
-            QLabel {
-                color: #0f172a;
+            }}
+            QLabel {{
+                color: {colors['text']};
                 font-size: 15px;
                 font-weight: 500;
-            }
-            QLineEdit, QTextEdit, QListWidget {
-                background: #ffffff;
-                border: 1px solid #e5e7eb;
+            }}
+            QLineEdit, QTextEdit, QListWidget {{
+                background: {colors['surface']};
+                border: 1px solid {colors['border']};
                 border-radius: 12px;
                 padding: 10px 12px;
-            }
-            QLineEdit:focus, QTextEdit:focus, QListWidget:focus {
-                border: 1px solid #2563eb;
-            }
-            QListWidget::item {
+            }}
+            QLineEdit:focus, QTextEdit:focus, QListWidget:focus {{
+                border: 1px solid {accent};
+            }}
+            QListWidget::item {{
                 padding: 6px 8px;
                 border-radius: 8px;
-            }
-            QListWidget::item:selected {
-                background: #dbeafe;
-                color: #1e3a8a;
-            }
-            QScrollArea {
+            }}
+            QListWidget::item:selected {{
+                background: {colors['list_sel_bg']};
+                color: {colors['list_sel_text']};
+            }}
+            QScrollArea {{
                 border: 0;
                 background: transparent;
-            }
-            QFrame#chatBubble {
+            }}
+            QFrame#chatBubble {{
                 border-radius: 18px;
-            }
-            QFrame#chatBubble[role="assistant"] {
-                background: #ffffff;
-                border: 1px solid #e5e7eb;
-            }
-            QFrame#chatBubble[role="user"] {
-                background: #f1f5f9;
-                border: 1px solid #e2e8f0;
-            }
-            QFrame#chatBubble[role="user"] QLabel {
-                color: #0f172a;
-            }
-            QFrame#chatBubble QTextBrowser {
+            }}
+            QFrame#chatBubble[role="assistant"] {{
+                background: {colors['bubble_ai']};
+                border: 1px solid {colors['border']};
+            }}
+            QFrame#chatBubble[role="user"] {{
+                background: {colors['bubble_user']};
+                border: 1px solid {colors['border']};
+            }}
+            QFrame#chatBubble[role="user"] QLabel {{
+                color: {colors['text']};
+            }}
+            QFrame#chatBubble QTextBrowser {{
                 background: transparent;
                 border: 0;
                 padding: 0;
-            }
-            QFrame#chatBubble QTextBrowser * {
+            }}
+            QFrame#chatBubble QTextBrowser * {{
                 font-size: 15px;
                 line-height: 1.5;
                 background: transparent;
-            }
-            QPushButton {
-                background: #10b981;
+            }}
+            QPushButton {{
+                background: {accent};
                 color: #ffffff;
                 border: 0;
                 border-radius: 12px;
                 padding: 8px 14px;
                 font-weight: 600;
-            }
-            QPushButton:hover {
-                background: #0ea5a1;
-            }
-            QPushButton:pressed {
-                background: #0f766e;
-            }
-            QPushButton:disabled {
-                background: #e2e8f0;
-                color: #94a3b8;
-            }
+            }}
+            QPushButton:hover {{
+                background: {accent_hover};
+            }}
+            QPushButton:pressed {{
+                background: {accent_press};
+            }}
+            QPushButton:disabled {{
+                background: {colors['border']};
+                color: {colors['muted']};
+            }}
             """
-        )
+
+    def apply_theme(self, theme: str, palette: str) -> None:
+        self.setStyleSheet(self.build_stylesheet(theme, palette))

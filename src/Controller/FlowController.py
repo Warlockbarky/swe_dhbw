@@ -14,6 +14,7 @@ from View.PfadView import PfadView
 from View.DateiListeView import DateiListeView
 from View.ChatView import ChatView
 from View.ChatHistoryView import ChatHistoryView
+from View.SettingsDialog import SettingsDialog
 
 from Model.PfadValidator import PfadValidator
 from Controller.DateiManager import DateiManager
@@ -25,13 +26,23 @@ class _ChatWorker(QObject):
     finished = pyqtSignal(dict)
     failed = pyqtSignal(str)
 
-    def __init__(self, *, mode: str, payload: dict, analyzer: KIAnalyzer, api_base_url: str, auth_token: str):
+    def __init__(
+        self,
+        *,
+        mode: str,
+        payload: dict,
+        analyzer: KIAnalyzer,
+        api_base_url: str,
+        auth_token: str,
+        ai_prefs: str,
+    ):
         super().__init__()
         self.mode = mode
         self.payload = payload
         self.analyzer = analyzer
         self.api_base_url = api_base_url
         self.auth_token = auth_token
+        self.ai_prefs = ai_prefs
 
     def run(self):
         try:
@@ -79,6 +90,8 @@ class _ChatWorker(QObject):
             "You are a helpful assistant. Use the provided file context when relevant. "
             "If the question is not about the file, answer normally."
         )
+        if self.ai_prefs:
+            system_msg = f"{system_msg}\n\nUser preferences:\n{self.ai_prefs}"
         context_msg = f"File name: {name}\n\nFile content:\n{trimmed}"
         messages = [
             {"role": "system", "content": system_msg},
@@ -130,6 +143,7 @@ class FlowController:
 
         self.__setup_connections()
         self.__load_saved_credentials()
+        self.__apply_saved_theme()
 
     def run(self):
         self.stack.setCurrentWidget(self.start_view)
@@ -145,6 +159,7 @@ class FlowController:
 
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
         self.datei_liste_view.get_btn_history().clicked.connect(self.__on_history_clicked)
+        self.datei_liste_view.get_btn_settings().clicked.connect(self.__on_settings_clicked)
         self.datei_liste_view.get_btn_upload().clicked.connect(self.__on_upload_clicked)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
@@ -200,6 +215,15 @@ class FlowController:
         self.login_view.show_error(
             f"Login fehlgeschlagen (HTTP {resp.status_code}). Bitte erneut versuchen."
         )
+
+    def __on_settings_clicked(self):
+        dialog = SettingsDialog(self.datei_liste_view)
+        dialog.set_values(self.__get_settings_values())
+        if dialog.exec() != dialog.DialogCode.Accepted:
+            return
+        values = dialog.get_values()
+        self.__save_settings_values(values)
+        self.__apply_theme_values(values)
 
     def __load_saved_credentials(self):
         remember = bool(self.settings.value("auth/remember", False, type=bool))
@@ -347,7 +371,8 @@ class FlowController:
             return
 
         suggested_name = record.get("name") or f"file_{file_id}"
-        save_path = self.datei_liste_view.prompt_save_path(suggested_name)
+        default_dir = self.settings.value("files/default_dir", "", type=str)
+        save_path = self.datei_liste_view.prompt_save_path(suggested_name, default_dir)
         if not save_path:
             return
 
@@ -396,7 +421,8 @@ class FlowController:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
             return
 
-        path = self.datei_liste_view.prompt_open_file()
+        default_dir = self.settings.value("files/default_dir", "", type=str)
+        path = self.datei_liste_view.prompt_open_file(default_dir)
         if not path:
             return
 
@@ -592,6 +618,7 @@ class FlowController:
             analyzer=self.ki_analyzer,
             api_base_url=self.api_base_url,
             auth_token=self.auth_token or "",
+            ai_prefs=self.__build_ai_preferences(),
         )
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
@@ -629,6 +656,54 @@ class FlowController:
     def __on_chat_thread_finished(self):
         self._chat_thread = None
         self._chat_worker = None
+
+    def __get_settings_values(self) -> dict:
+        return {
+            "theme": self.settings.value("ui/theme", "Light", type=str),
+            "palette": self.settings.value("ui/palette", "Emerald", type=str),
+            "default_path": self.settings.value("files/default_dir", "", type=str),
+            "ai_tone": self.settings.value("ai/tone", "Neutral", type=str),
+            "ai_format": self.settings.value("ai/format", "Markdown", type=str),
+            "ai_length": self.settings.value("ai/length", "Medium", type=str),
+            "ai_notes": self.settings.value("ai/notes", "", type=str),
+        }
+
+    def __save_settings_values(self, values: dict):
+        self.settings.setValue("ui/theme", values.get("theme", "Light"))
+        self.settings.setValue("ui/palette", values.get("palette", "Emerald"))
+        self.settings.setValue("files/default_dir", values.get("default_path", ""))
+        self.settings.setValue("ai/tone", values.get("ai_tone", "Neutral"))
+        self.settings.setValue("ai/format", values.get("ai_format", "Markdown"))
+        self.settings.setValue("ai/length", values.get("ai_length", "Medium"))
+        self.settings.setValue("ai/notes", values.get("ai_notes", ""))
+
+    def __apply_theme_values(self, values: dict):
+        theme = (values.get("theme") or "Light").lower()
+        palette = (values.get("palette") or "Emerald").lower()
+        for view in (
+            self.start_view,
+            self.login_view,
+            self.pfad_view,
+            self.datei_liste_view,
+            self.chat_view,
+            self.history_view,
+        ):
+            view.apply_theme(theme, palette)
+
+    def __apply_saved_theme(self):
+        self.__apply_theme_values(self.__get_settings_values())
+
+    def __build_ai_preferences(self) -> str:
+        values = self.__get_settings_values()
+        parts = [
+            f"Tone: {values.get('ai_tone', 'Neutral')}",
+            f"Format: {values.get('ai_format', 'Markdown')}",
+            f"Length: {values.get('ai_length', 'Medium')}",
+        ]
+        notes = values.get("ai_notes", "")
+        if notes:
+            parts.append(f"Notes: {notes}")
+        return "\n".join(parts)
 
     def __new_chat_session(self, *, title: str) -> str:
         chat_id = datetime.now().strftime("%Y%m%d%H%M%S%f")

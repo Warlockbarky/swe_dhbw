@@ -1,3 +1,5 @@
+import os
+
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
 
 from View.Hauptoberflaeche import Hauptoberflaeche
@@ -9,6 +11,7 @@ class DateiListeView(Hauptoberflaeche):
         self.list_widget = QListWidget()
         self.btn_refresh = QPushButton("Aktualisieren")
         self.btn_history = QPushButton("Chat History")
+        self.btn_settings = QPushButton("Settings")
         self.btn_upload = QPushButton("Upload")
         self.btn_download = QPushButton("Download")
         self.btn_delete = QPushButton("Delete")
@@ -26,6 +29,7 @@ class DateiListeView(Hauptoberflaeche):
         sidebar.addWidget(self.btn_delete)
         sidebar.addWidget(self.btn_ai_summary)
         sidebar.addStretch()
+        sidebar.addWidget(self.btn_settings)
 
         content = QHBoxLayout()
         content.setSpacing(16)
@@ -48,6 +52,9 @@ class DateiListeView(Hauptoberflaeche):
     def get_btn_history(self):
         return self.btn_history
 
+    def get_btn_settings(self):
+        return self.btn_settings
+
     def get_btn_upload(self):
         return self.btn_upload
 
@@ -60,18 +67,20 @@ class DateiListeView(Hauptoberflaeche):
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()
 
-    def prompt_save_path(self, suggested_name: str) -> str:
+    def prompt_save_path(self, suggested_name: str, default_dir: str = "") -> str:
+        initial = os.path.join(default_dir, suggested_name) if default_dir else suggested_name
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Datei speichern",
-            suggested_name,
+            initial,
         )
         return path
 
-    def prompt_open_file(self) -> str:
+    def prompt_open_file(self, default_dir: str = "") -> str:
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Datei hochladen",
+            default_dir,
         )
         return path
 
