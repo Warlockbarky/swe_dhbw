@@ -1,5 +1,7 @@
 import io
+import json
 import sys
+from datetime import datetime
 
 import requests
 from PyPDF2 import PdfReader
@@ -11,6 +13,7 @@ from View.LoginView import LoginView
 from View.PfadView import PfadView
 from View.DateiListeView import DateiListeView
 from View.ChatView import ChatView
+from View.ChatHistoryView import ChatHistoryView
 
 from Model.PfadValidator import PfadValidator
 from Controller.DateiManager import DateiManager
@@ -100,6 +103,7 @@ class FlowController:
         self.file_records = []
         self.ki_analyzer = KIAnalyzer()
         self.chat_messages = []
+        self.current_chat_id = None
         self._chat_thread = None
         self._chat_worker = None
         self.settings = QSettings("swe_dhbw", "swe_dhbw")
@@ -109,6 +113,7 @@ class FlowController:
         self.pfad_view = PfadView()
         self.datei_liste_view = DateiListeView()
         self.chat_view = ChatView()
+        self.history_view = ChatHistoryView()
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.start_view)
@@ -116,6 +121,7 @@ class FlowController:
         self.stack.addWidget(self.pfad_view)
         self.stack.addWidget(self.datei_liste_view)
         self.stack.addWidget(self.chat_view)
+        self.stack.addWidget(self.history_view)
 
         # Controller/Model verdrahten
         self.pfad_validator = PfadValidator()
@@ -138,6 +144,7 @@ class FlowController:
         self.login_view.get_btn_register().clicked.connect(self.__on_register_clicked)
 
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
+        self.datei_liste_view.get_btn_history().clicked.connect(self.__on_history_clicked)
         self.datei_liste_view.get_btn_upload().clicked.connect(self.__on_upload_clicked)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
@@ -145,6 +152,10 @@ class FlowController:
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
         self.chat_view.get_btn_back().clicked.connect(self.__on_chat_back_clicked)
+
+        self.history_view.get_btn_open().clicked.connect(self.__on_history_open_clicked)
+        self.history_view.get_btn_delete().clicked.connect(self.__on_history_delete_clicked)
+        self.history_view.get_btn_back().clicked.connect(self.__on_history_back_clicked)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
 
@@ -271,6 +282,7 @@ class FlowController:
             items = self.__format_file_labels(self.file_records)
             self.datei_liste_view.set_items(items)
             self.chat_messages = []
+            self.current_chat_id = None
             self.chat_view.clear_chat()
             self.chat_view.clear_chat_input()
             self.stack.setCurrentWidget(self.datei_liste_view)
@@ -492,6 +504,7 @@ class FlowController:
 
         name = record.get("name") or f"file_{file_id}"
         self.chat_view.clear_chat()
+        self.current_chat_id = self.__new_chat_session(title=name)
         self.stack.setCurrentWidget(self.chat_view)
         self.chat_view.set_send_enabled(False)
         self.chat_view.start_loading()
@@ -520,6 +533,53 @@ class FlowController:
         )
 
     def __on_chat_back_clicked(self):
+        self.stack.setCurrentWidget(self.datei_liste_view)
+
+    def __on_history_clicked(self):
+        items = self.__format_history_items(self.__load_history())
+        self.history_view.set_items(items)
+        self.stack.setCurrentWidget(self.history_view)
+
+    def __on_history_open_clicked(self):
+        history = self.__load_history()
+        idx = self.history_view.get_selected_index()
+        if idx < 0 or idx >= len(history):
+            self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
+            return
+        entry = history[idx]
+        self.current_chat_id = entry.get("id")
+        self.chat_messages = entry.get("messages", [])
+        self.chat_view.clear_chat()
+        self.__render_chat_messages(self.chat_messages)
+        self.stack.setCurrentWidget(self.chat_view)
+
+    def __on_history_delete_clicked(self):
+        history = self.__load_history()
+        idx = self.history_view.get_selected_index()
+        if idx < 0 or idx >= len(history):
+            self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
+            return
+        entry = history[idx]
+        title = entry.get("title") or "Chat"
+        confirm = QMessageBox.question(
+            self.history_view,
+            "Chat loeschen",
+            f"Soll der Chat '{title}' wirklich geloescht werden?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        history.pop(idx)
+        self.__save_history(history)
+        if self.current_chat_id == entry.get("id"):
+            self.current_chat_id = None
+            self.chat_messages = []
+            self.chat_view.clear_chat()
+        self.history_view.set_items(self.__format_history_items(history))
+
+    def __on_history_back_clicked(self):
         self.stack.setCurrentWidget(self.datei_liste_view)
 
     def __start_chat_worker(self, *, mode: str, payload: dict):
@@ -559,6 +619,7 @@ class FlowController:
 
         self.chat_view.set_send_enabled(True)
         self.chat_view.stop_loading_and_stream(assistant_text)
+        self.__persist_current_chat()
 
     def __on_chat_worker_failed(self, message: str):
         self.chat_view.set_send_enabled(True)
@@ -568,6 +629,64 @@ class FlowController:
     def __on_chat_thread_finished(self):
         self._chat_thread = None
         self._chat_worker = None
+
+    def __new_chat_session(self, *, title: str) -> str:
+        chat_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        self.current_chat_id = chat_id
+        self.chat_messages = []
+        history = self.__load_history()
+        history.insert(0, {
+            "id": chat_id,
+            "title": title,
+            "messages": [],
+            "updated_at": datetime.now().isoformat(timespec="seconds"),
+        })
+        self.__save_history(history)
+        return chat_id
+
+    def __persist_current_chat(self):
+        if not self.current_chat_id:
+            return
+        history = self.__load_history()
+        for entry in history:
+            if entry.get("id") == self.current_chat_id:
+                entry["messages"] = list(self.chat_messages)
+                entry["updated_at"] = datetime.now().isoformat(timespec="seconds")
+                break
+        self.__save_history(history)
+
+    def __render_chat_messages(self, messages: list[dict]):
+        for msg in messages:
+            role = msg.get("role")
+            if role not in {"user", "assistant"}:
+                continue
+            text = str(msg.get("content") or "")
+            self.chat_view.add_message(role, text, stream=False)
+
+    def __load_history(self) -> list[dict]:
+        raw = self.settings.value("chat/history", "[]", type=str)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if isinstance(data, list):
+            return data
+        return []
+
+    def __save_history(self, history: list[dict]):
+        self.settings.setValue("chat/history", json.dumps(history))
+
+    @staticmethod
+    def __format_history_items(history: list[dict]) -> list[str]:
+        items = []
+        for entry in history:
+            title = entry.get("title") or "Chat"
+            updated = entry.get("updated_at") or ""
+            if updated:
+                items.append(f"{title}  ({updated})")
+            else:
+                items.append(str(title))
+        return items
 
     def __on_pfad_ok(self):
         pfad_str = self.pfad_view.get_path()

@@ -8,6 +8,7 @@ class DateiListeView(Hauptoberflaeche):
         super().__init__()
         self.list_widget = QListWidget()
         self.btn_refresh = QPushButton("Aktualisieren")
+        self.btn_history = QPushButton("Chat History")
         self.btn_upload = QPushButton("Upload")
         self.btn_download = QPushButton("Download")
         self.btn_delete = QPushButton("Delete")
@@ -19,6 +20,7 @@ class DateiListeView(Hauptoberflaeche):
         sidebar = QVBoxLayout()
         sidebar.setSpacing(10)
         sidebar.addWidget(self.btn_refresh)
+        sidebar.addWidget(self.btn_history)
         sidebar.addWidget(self.btn_upload)
         sidebar.addWidget(self.btn_download)
         sidebar.addWidget(self.btn_delete)
@@ -42,6 +44,9 @@ class DateiListeView(Hauptoberflaeche):
 
     def get_btn_download(self):
         return self.btn_download
+
+    def get_btn_history(self):
+        return self.btn_history
 
     def get_btn_upload(self):
         return self.btn_upload
