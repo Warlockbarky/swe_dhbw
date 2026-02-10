@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QListWidget, QPushButton
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
@@ -16,17 +16,21 @@ class DateiListeView(Hauptoberflaeche):
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
-        actions = QHBoxLayout()
-        actions.setSpacing(10)
-        actions.addWidget(self.btn_refresh)
-        actions.addWidget(self.btn_upload)
-        actions.addWidget(self.btn_download)
-        actions.addWidget(self.btn_delete)
-        actions.addWidget(self.btn_ai_summary)
-        actions.addStretch()
+        sidebar = QVBoxLayout()
+        sidebar.setSpacing(10)
+        sidebar.addWidget(self.btn_refresh)
+        sidebar.addWidget(self.btn_upload)
+        sidebar.addWidget(self.btn_download)
+        sidebar.addWidget(self.btn_delete)
+        sidebar.addWidget(self.btn_ai_summary)
+        sidebar.addStretch()
 
-        self.root.addWidget(self.list_widget)
-        self.root.addLayout(actions)
+        content = QHBoxLayout()
+        content.setSpacing(16)
+        content.addLayout(sidebar, stretch=0)
+        content.addWidget(self.list_widget, stretch=1)
+
+        self.root.addLayout(content)
         self.mittig_auf_bildschirm()
 
     def set_items(self, items: list[str]):
