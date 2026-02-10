@@ -186,7 +186,9 @@ class ChatView(Hauptoberflaeche):
 
     @staticmethod
     def _sync_message_size(view: QTextBrowser):
-        doc_width = int(view.document().idealWidth())
+        doc = view.document()
+        doc.setTextWidth(-1)
+        doc_width = int(doc.idealWidth())
         margins = view.contentsMargins()
         padding = margins.top() + margins.bottom()
         extra = view.frameWidth() * 2
@@ -196,15 +198,15 @@ class ChatView(Hauptoberflaeche):
             min_width = 220
             max_width = 700
         else:
-            min_width = 180
+            min_width = 0
             max_width = 520
 
         target_width = max(min_width, min(max_width, doc_width + 24))
         view.setMinimumWidth(target_width)
         view.setMaximumWidth(target_width)
-        view.document().setTextWidth(target_width)
+        doc.setTextWidth(target_width)
 
-        doc_height = int(view.document().documentLayout().documentSize().height())
+        doc_height = int(doc.documentLayout().documentSize().height())
         target_height = doc_height + padding + extra
         view.setMinimumHeight(target_height)
         view.setMaximumHeight(target_height)
