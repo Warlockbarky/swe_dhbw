@@ -3,7 +3,7 @@ import sys
 
 import requests
 from PyPDF2 import PdfReader
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMessageBox, QStackedWidget
 
 from View.MenueView import MenueView
@@ -102,6 +102,7 @@ class FlowController:
         self.chat_messages = []
         self._chat_thread = None
         self._chat_worker = None
+        self.settings = QSettings("swe_dhbw", "swe_dhbw")
 
         self.start_view = MenueView()
         self.login_view = LoginView()
@@ -122,6 +123,7 @@ class FlowController:
         self.backup_manager = BackupManager(self.datei_manager)
 
         self.__setup_connections()
+        self.__load_saved_credentials()
 
     def run(self):
         self.stack.setCurrentWidget(self.start_view)
@@ -148,6 +150,7 @@ class FlowController:
 
     def __starte_login(self):
         self.stack.setCurrentWidget(self.login_view)
+        self.__maybe_auto_login()
 
     def __on_login_clicked(self):
         username = self.login_view.get_username()
@@ -175,6 +178,7 @@ class FlowController:
                 self.login_view.show_error("Login fehlgeschlagen: Token fehlt in der Antwort.")
                 return
             self.auth_token = token
+            self.__save_credentials(username, password)
             self.__load_files_and_show()
             return
 
@@ -185,6 +189,36 @@ class FlowController:
         self.login_view.show_error(
             f"Login fehlgeschlagen (HTTP {resp.status_code}). Bitte erneut versuchen."
         )
+
+    def __load_saved_credentials(self):
+        remember = bool(self.settings.value("auth/remember", False, type=bool))
+        if not remember:
+            return
+        username = self.settings.value("auth/username", "", type=str)
+        password = self.settings.value("auth/password", "", type=str)
+        if username:
+            self.login_view.set_username(username)
+        if password:
+            self.login_view.set_password(password)
+        self.login_view.set_remember_checked(True)
+
+    def __maybe_auto_login(self):
+        remember = bool(self.settings.value("auth/remember", False, type=bool))
+        if not remember:
+            return
+        username = self.login_view.get_username()
+        password = self.login_view.get_password()
+        if not username or not password:
+            return
+        QTimer.singleShot(0, self.__on_login_clicked)
+
+    def __save_credentials(self, username: str, password: str):
+        if self.login_view.get_remember_checked():
+            self.settings.setValue("auth/remember", True)
+            self.settings.setValue("auth/username", username)
+            self.settings.setValue("auth/password", password)
+        else:
+            self.settings.remove("auth")
 
     def __on_register_clicked(self):
         username = self.login_view.get_username()
