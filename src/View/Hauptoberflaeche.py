@@ -107,6 +107,24 @@ class Hauptoberflaeche(QWidget):
                 font-size: 16px;
                 font-weight: 600;
             }}
+            QLabel#SplashTitle {{
+                font-size: 22px;
+                font-weight: 700;
+                letter-spacing: 0.4px;
+            }}
+            QLabel#SplashGreetingPrefix {{
+                color: {accent};
+                font-size: 18px;
+                font-weight: 600;
+            }}
+            QLabel#SplashGreetingName {{
+                font-size: 18px;
+                font-weight: 700;
+            }}
+            QLabel#SplashSubtitle {{
+                color: {colors['text_muted']};
+                font-size: 13px;
+            }}
             QLabel#FieldLabel {{
                 color: {colors['text_muted']};
                 font-size: 12px;
@@ -114,6 +132,23 @@ class Hauptoberflaeche(QWidget):
             QLabel#HelperText {{
                 color: {colors['text_muted']};
                 font-size: 12px;
+            }}
+
+            /* Splash progress */
+            QProgressBar#SplashProgress {{
+                background: {colors['surface_alt']};
+                border: 1px solid {colors['border']};
+                border-radius: 8px;
+                min-height: 10px;
+            }}
+            QProgressBar#SplashProgress::chunk {{
+                border-radius: 8px;
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {accent},
+                    stop: 0.5 {accent_hover},
+                    stop: 1 {accent_press}
+                );
             }}
 
             /* Cards */

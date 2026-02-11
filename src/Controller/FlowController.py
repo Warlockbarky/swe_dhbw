@@ -163,12 +163,10 @@ class FlowController:
     def run(self):
         self.stack.setCurrentWidget(self.start_view)
         self.stack.show()
+        self.__start_splash()
         return self.app.exec()
 
     def __setup_connections(self):
-        self.start_view.get_btn_start().clicked.connect(self.__starte_login)
-        self.start_view.get_btn_stop().clicked.connect(self.app.quit)
-
         self.login_view.get_btn_login().clicked.connect(self.__on_login_clicked)
         self.login_view.get_btn_register().clicked.connect(self.__on_register_clicked)
 
@@ -198,6 +196,17 @@ class FlowController:
     def __starte_login(self):
         self.stack.setCurrentWidget(self.login_view)
         self.__maybe_auto_login()
+
+    def __start_splash(self):
+        self.start_view.start_loading()
+        QTimer.singleShot(1500, self.__show_greeting)
+
+    def __show_greeting(self):
+        remember = bool(self.settings.value("auth/remember", False, type=bool))
+        username = self.settings.value("auth/username", "", type=str) if remember else ""
+        username = username.strip() or None
+        self.start_view.show_greeting(username)
+        QTimer.singleShot(2200, self.__starte_login)
 
     def __on_login_clicked(self):
         username = self.login_view.get_username()
