@@ -1,11 +1,22 @@
 import os
 
-from PyQt6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QFileDialog,
+    QFrame,
+    QHBoxLayout,
+    QListWidget,
+    QMenu,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
 
 class DateiListeView(Hauptoberflaeche):
+    request_details = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.list_widget = QListWidget()
@@ -26,6 +37,8 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_logout.setObjectName("DangerButton")
         self.btn_ai_summary.setObjectName("SecondaryButton")
         self.list_widget.setMinimumHeight(140)
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list_widget.customContextMenuRequested.connect(self.__show_context_menu)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -82,6 +95,17 @@ class DateiListeView(Hauptoberflaeche):
 
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()
+
+    def __show_context_menu(self, position):
+        item = self.list_widget.itemAt(position)
+        if item is None:
+            return
+        menu = QMenu(self)
+        action = menu.addAction("Details anzeigen")
+        selected_action = menu.exec(self.list_widget.mapToGlobal(position))
+        if selected_action == action:
+            row = self.list_widget.row(item)
+            self.request_details.emit(row)
 
     def prompt_save_path(self, suggested_name: str, default_dir: str = "") -> str:
         initial = os.path.join(default_dir, suggested_name) if default_dir else suggested_name

@@ -178,6 +178,7 @@ class FlowController:
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
         self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
+        self.datei_liste_view.request_details.connect(self.__on_file_details_requested)
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
         self.chat_view.get_btn_back().clicked.connect(self.__on_chat_back_clicked)
@@ -366,7 +367,21 @@ class FlowController:
                     or item.get("original_filename")
                     or item.get("path")
                 )
-                records.append({"id": file_id, "name": name})
+                records.append(
+                    {
+                        "id": file_id,
+                        "name": name,
+                        "size": item.get("size")
+                        or item.get("file_size")
+                        or item.get("filesize"),
+                        "created_at": item.get("created_at")
+                        or item.get("created")
+                        or item.get("uploaded_at"),
+                        "updated_at": item.get("updated_at")
+                        or item.get("modified_at")
+                        or item.get("updated"),
+                    }
+                )
             else:
                 records.append({"id": None, "name": str(item)})
 
@@ -379,10 +394,40 @@ class FlowController:
             file_id = record.get("id")
             name = record.get("name") or "Datei"
             if file_id is not None:
-                items.append(f"{file_id}: {name}")
+                label = f"{file_id}: {name}"
             else:
-                items.append(str(name))
+                label = str(name)
+            items.append(label)
         return items
+
+    @staticmethod
+    def __format_size(value) -> str:
+        try:
+            size = int(value)
+        except (TypeError, ValueError):
+            return ""
+        units = ["B", "KB", "MB", "GB", "TB"]
+        unit_index = 0
+        size_float = float(size)
+        while size_float >= 1024 and unit_index < len(units) - 1:
+            size_float /= 1024.0
+            unit_index += 1
+        if unit_index == 0:
+            return f"{int(size_float)} {units[unit_index]}"
+        return f"{size_float:.1f} {units[unit_index]}"
+
+    @staticmethod
+    def __format_date(value) -> str:
+        if not value:
+            return ""
+        if isinstance(value, datetime):
+            return value.strftime("%Y-%m-%d %H:%M")
+        try:
+            text = str(value).replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(text)
+            return parsed.strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            return str(value)
 
     def __on_download_clicked(self):
         if not self.auth_token:
@@ -445,6 +490,51 @@ class FlowController:
         self.datei_liste_view.show_error(
             f"Download fehlgeschlagen (HTTP {resp.status_code})."
         )
+
+    def __on_file_details_requested(self, row: int):
+        if row < 0 or row >= len(self.file_records):
+            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
+            return
+
+        record = self.file_records[row]
+        name = record.get("name") or "Datei"
+        file_id = record.get("id")
+        local_info = self.__get_local_file_info(record)
+        size_label = local_info.get("size") or self.__format_size(record.get("size")) or "Unbekannt"
+        created_label = local_info.get("created") or self.__format_date(record.get("created_at")) or "Unbekannt"
+
+        details = [
+            f"Name: {name}",
+            f"ID: {file_id if file_id is not None else 'Unbekannt'}",
+            f"Groesse: {size_label}",
+            f"Erstellt: {created_label}",
+        ]
+        self.datei_liste_view.show_error("Dateidetails\n\n" + "\n".join(details))
+
+    def __get_local_file_info(self, record: dict) -> dict:
+        target_dir = self.__resolve_download_dir()
+        if target_dir is None:
+            return {}
+        name = record.get("name") or ""
+        file_id = record.get("id")
+        safe_name = Path(name).name or (f"file_{file_id}" if file_id is not None else "")
+        if not safe_name:
+            return {}
+        local_path = target_dir / safe_name
+        if not local_path.exists():
+            return {}
+        try:
+            stat = local_path.stat()
+        except OSError:
+            return {}
+        created_ts = getattr(stat, "st_birthtime", None)
+        if created_ts is None:
+            created_ts = stat.st_mtime
+        created_label = self.__format_date(datetime.fromtimestamp(created_ts)) if created_ts else ""
+        return {
+            "size": self.__format_size(stat.st_size),
+            "created": created_label,
+        }
 
     def __sync_files_to_folder(self):
         target = self.__resolve_download_dir()
