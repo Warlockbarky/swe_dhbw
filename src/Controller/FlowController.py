@@ -173,6 +173,7 @@ class FlowController:
         self.datei_liste_view.get_btn_refresh().clicked.connect(self.__load_files_and_show)
         self.datei_liste_view.get_btn_history().clicked.connect(self.__on_history_clicked)
         self.datei_liste_view.get_btn_settings().clicked.connect(self.__on_settings_clicked)
+        self.datei_liste_view.get_btn_logout().clicked.connect(self.__on_logout_clicked)
         self.datei_liste_view.get_btn_upload().clicked.connect(self.__on_upload_clicked)
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
@@ -239,6 +240,16 @@ class FlowController:
         values = dialog.get_values()
         self.__save_settings_values(values)
         self.__apply_theme_values(values)
+
+    def __on_logout_clicked(self):
+        self.auth_token = None
+        self.file_records = []
+        self.settings.remove("auth")
+        self.datei_liste_view.set_items([])
+        self.login_view.set_username("")
+        self.login_view.set_password("")
+        self.login_view.set_remember_checked(False)
+        self.stack.setCurrentWidget(self.login_view)
 
     def __load_saved_credentials(self):
         remember = bool(self.settings.value("auth/remember", False, type=bool))

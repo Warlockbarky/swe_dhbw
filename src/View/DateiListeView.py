@@ -12,6 +12,7 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_refresh = QPushButton("Aktualisieren")
         self.btn_history = QPushButton("Chat History")
         self.btn_settings = QPushButton("Settings")
+        self.btn_logout = QPushButton("Logout")
         self.btn_upload = QPushButton("Upload")
         self.btn_download = QPushButton("Download")
         self.btn_delete = QPushButton("Delete")
@@ -22,6 +23,7 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_refresh.setObjectName("GhostButton")
         self.btn_history.setObjectName("GhostButton")
         self.btn_settings.setObjectName("GhostButton")
+        self.btn_logout.setObjectName("DangerButton")
         self.btn_ai_summary.setObjectName("SecondaryButton")
         self.list_widget.setMinimumHeight(140)
         self.__fenster_erstellen()
@@ -40,6 +42,7 @@ class DateiListeView(Hauptoberflaeche):
         sidebar.addWidget(self.btn_ai_summary)
         sidebar.addStretch()
         sidebar.addWidget(self.btn_settings)
+        sidebar.addWidget(self.btn_logout)
 
         content = QHBoxLayout()
         content.setSpacing(16)
@@ -64,6 +67,9 @@ class DateiListeView(Hauptoberflaeche):
 
     def get_btn_settings(self):
         return self.btn_settings
+
+    def get_btn_logout(self):
+        return self.btn_logout
 
     def get_btn_upload(self):
         return self.btn_upload
