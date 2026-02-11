@@ -24,3 +24,19 @@
    - Animationen bei der Generierung von KI-Antworten überarbeiten.
    - Zeilenabstand in den Antworten der KI und in den Nachrichten des Benutzers erhöhen.
    - Design und Benutzererfahrung im KI-Chat-Fenster insgesamt verbessern.
+
+7. **Sortier- und Umbenennungsfunktionen hinzufügen**
+   - Möglichkeit hinzufügen, Dateien nach Datum, Name und Dateiformat zu sortieren.
+   - Möglichkeit hinzufügen, Chats nach Datum und Name zu sortieren sowie Chats umzubenennen.
+
+8. **Design überarbeiten**
+   - Überlegen, wie das Design benutzerfreundlicher, schöner und interessanter gestaltet werden kann.
+
+9. **Personalisierungsmöglichkeiten erweitern**
+   - In den Einstellungen mehr Möglichkeiten zur Personalisierung hinzufügen (z. B. die Möglichkeit, beliebige Farben für die Farbpalette auszuwählen, eventuell weitere Themen neben dem hellen und dunklen Modus hinzufügen).
+
+10. **Code-Refactoring durchführen**
+    - Alle Dateien überprüfen und Refactoring durchführen (insbesondere `FlowController`), damit der Code den Best Practices entspricht.
+
+11. **Tests schreiben**
+    - Alle Arten von Tests gemäß dem Skript Einheit 2.4 schreiben.
