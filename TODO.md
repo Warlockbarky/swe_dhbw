@@ -3,7 +3,7 @@
 ## Aufgaben
 
 1. **Fehlerbenachrichtigungen anzeigen**
-   - Fehlerbenachrichtigungen sollen nicht nur in der Konsole ausgegeben werden, sondern auch dem Benutzer angezeigt werden.
+   - Fehlerbenachrichtigungen sollen nicht nur in der Konsole ausgegeben werden, sondern auch dem Benutzer angezeigt werden. (done)
 
 2. **Ersteinrichtung für neue Benutzer hinzufügen**
    - Beim ersten Start eines neuen Benutzers soll eine Ersteinrichtung durchgeführt werden.

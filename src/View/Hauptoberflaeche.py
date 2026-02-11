@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPalette
-from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QWidget
 
 
 class Hauptoberflaeche(QWidget):
@@ -24,6 +24,7 @@ class Hauptoberflaeche(QWidget):
 
     def show_error(self, msg: str):
         print("ERROR:", msg)
+        QMessageBox.critical(self, "Fehler", msg)
     def show_UI(self):
         self.show()
 
