@@ -12,7 +12,7 @@
      - Standardpfad für das Speichern von Dateien festlegen.
 
 3. **Hintergrundfarbe in den Einstellungen entfernen**
-   - Farbige Hintergründe in den Textblöcken der Einstellungen sollen entfernt werden, damit die Blöcke nicht hervorgehoben werden.
+   - Farbige Hintergründe in den Textblöcken der Einstellungen sollen entfernt werden, damit die Blöcke nicht hervorgehoben werden. (done)
 
 4. **Dateidetails anzeigen**
    - Möglichkeit hinzufügen, Details von Dateien anzuzeigen (z. B. Größe, Erstellungsdatum usw.). (done)

@@ -7,6 +7,7 @@ from View.Hauptoberflaeche import Hauptoberflaeche
 class LoginView(Hauptoberflaeche):
     def __init__(self):
         super().__init__()
+        self.setObjectName("LoginView")
         self.btn_login = None
         self.btn_register = None
         self.remember_me = QCheckBox("Angemeldet bleiben")

@@ -122,6 +122,10 @@ class Hauptoberflaeche(QWidget):
                 border: 1px solid {colors['border']};
                 border-radius: 12px;
             }}
+            QWidget#LoginView QFrame#Card,
+            QDialog#SettingsDialog QFrame#Card {{
+                background: transparent;
+            }}
             QFrame#Sidebar {{
                 background: {colors['surface']};
                 border: 1px solid {colors['border']};
