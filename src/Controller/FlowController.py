@@ -180,6 +180,7 @@ class FlowController:
         self.datei_liste_view.get_btn_download().clicked.connect(self.__on_download_clicked)
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
         self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
+        self.datei_liste_view.get_btn_select_all().clicked.connect(self.__on_files_select_all_clicked)
         self.datei_liste_view.request_details.connect(self.__on_file_details_requested)
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
@@ -189,6 +190,7 @@ class FlowController:
 
         self.history_view.get_btn_open().clicked.connect(self.__on_history_open_clicked)
         self.history_view.get_btn_delete().clicked.connect(self.__on_history_delete_clicked)
+        self.history_view.get_btn_select_all().clicked.connect(self.__on_history_select_all_clicked)
         self.history_view.get_btn_back().clicked.connect(self.__on_history_back_clicked)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
@@ -722,6 +724,10 @@ class FlowController:
         if errors:
             self.datei_liste_view.show_error("\n".join(errors))
 
+    def __on_files_select_all_clicked(self):
+        select_all = not self.datei_liste_view.are_all_checked()
+        self.datei_liste_view.set_all_checked(select_all)
+
     def __on_ai_summary_clicked(self):
         if not self.auth_token:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
@@ -858,6 +864,10 @@ class FlowController:
             self.chat_view.clear_chat()
             self.chat_view.set_selected_files([])
         self.history_view.set_items(self.__format_history_items(history))
+
+    def __on_history_select_all_clicked(self):
+        select_all = not self.history_view.are_all_checked()
+        self.history_view.set_all_checked(select_all)
 
     def __on_history_back_clicked(self):
         self.stack.setCurrentWidget(self.datei_liste_view)

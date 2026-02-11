@@ -30,9 +30,11 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_download = QPushButton("Download")
         self.btn_delete = QPushButton("Delete")
         self.btn_ai_summary = QPushButton("KI Chat")
+        self.btn_select_all = QPushButton("Alle auswaehlen")
         self.btn_upload.setObjectName("PrimaryButton")
         self.btn_download.setObjectName("SecondaryButton")
         self.btn_delete.setObjectName("DangerButton")
+        self.btn_select_all.setObjectName("GhostButton")
         self.btn_refresh.setObjectName("GhostButton")
         self.btn_history.setObjectName("GhostButton")
         self.btn_settings.setObjectName("GhostButton")
@@ -56,6 +58,7 @@ class DateiListeView(Hauptoberflaeche):
         sidebar.addWidget(self.btn_download)
         sidebar.addWidget(self.btn_delete)
         sidebar.addWidget(self.btn_ai_summary)
+        sidebar.addWidget(self.btn_select_all)
         sidebar.addStretch()
         sidebar.addWidget(self.btn_settings)
         sidebar.addWidget(self.btn_logout)
@@ -100,6 +103,9 @@ class DateiListeView(Hauptoberflaeche):
     def get_btn_ai_summary(self):
         return self.btn_ai_summary
 
+    def get_btn_select_all(self):
+        return self.btn_select_all
+
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()
 
@@ -113,6 +119,22 @@ class DateiListeView(Hauptoberflaeche):
             if item is not None and item.checkState() == Qt.CheckState.Checked:
                 indices.append(row)
         return indices
+
+    def set_all_checked(self, checked: bool):
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is not None:
+                item.setCheckState(state)
+
+    def are_all_checked(self) -> bool:
+        if self.list_widget.count() == 0:
+            return False
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is None or item.checkState() != Qt.CheckState.Checked:
+                return False
+        return True
 
     def __show_context_menu(self, position):
         item = self.list_widget.itemAt(position)

@@ -17,9 +17,11 @@ class ChatHistoryView(Hauptoberflaeche):
         self.list_widget = QListWidget()
         self.btn_open = QPushButton("Oeffnen")
         self.btn_delete = QPushButton("Loeschen")
+        self.btn_select_all = QPushButton("Alle auswaehlen")
         self.btn_back = QPushButton("Zurueck")
         self.btn_open.setObjectName("PrimaryButton")
         self.btn_delete.setObjectName("DangerButton")
+        self.btn_select_all.setObjectName("GhostButton")
         self.btn_back.setObjectName("SecondaryButton")
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.__fenster_erstellen()
@@ -29,6 +31,7 @@ class ChatHistoryView(Hauptoberflaeche):
         actions.setSpacing(10)
         actions.addWidget(self.btn_open)
         actions.addWidget(self.btn_delete)
+        actions.addWidget(self.btn_select_all)
         actions.addStretch()
         actions.addWidget(self.btn_back)
 
@@ -58,11 +61,30 @@ class ChatHistoryView(Hauptoberflaeche):
                 indices.append(row)
         return indices
 
+    def set_all_checked(self, checked: bool):
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is not None:
+                item.setCheckState(state)
+
+    def are_all_checked(self) -> bool:
+        if self.list_widget.count() == 0:
+            return False
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is None or item.checkState() != Qt.CheckState.Checked:
+                return False
+        return True
+
     def get_btn_open(self):
         return self.btn_open
 
     def get_btn_delete(self):
         return self.btn_delete
+
+    def get_btn_select_all(self):
+        return self.btn_select_all
 
     def get_btn_back(self):
         return self.btn_back
