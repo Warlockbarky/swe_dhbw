@@ -2,6 +2,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QPushButton,
     QScrollArea,
@@ -19,6 +20,13 @@ class ChatView(Hauptoberflaeche):
         super().__init__()
         self.btn_back = QPushButton("Zurueck")
         self.btn_back.setObjectName("SecondaryButton")
+        self.btn_select_files = QPushButton("Dateien waehlen")
+        self.btn_select_files.setObjectName("GhostButton")
+        self.btn_clear_files = QPushButton("Auswahl loeschen")
+        self.btn_clear_files.setObjectName("GhostButton")
+        self.selected_files_label = QLabel("Keine Dateien ausgewaehlt.")
+        self.selected_files_label.setObjectName("HelperText")
+        self.selected_files_label.setWordWrap(True)
         self.chat_scroll = QScrollArea()
         self.chat_scroll.setObjectName("ChatScroll")
         self.chat_scroll.setWidgetResizable(True)
@@ -52,12 +60,19 @@ class ChatView(Hauptoberflaeche):
         actions.addWidget(self.btn_back)
         actions.addStretch()
 
+        files_row = QHBoxLayout()
+        files_row.setSpacing(10)
+        files_row.addWidget(self.btn_select_files)
+        files_row.addWidget(self.btn_clear_files)
+        files_row.addWidget(self.selected_files_label, stretch=1)
+
         input_row = QHBoxLayout()
         input_row.setSpacing(10)
         input_row.addWidget(self.chat_input)
         input_row.addWidget(self.btn_send)
 
         self.root.addLayout(actions)
+        self.root.addLayout(files_row)
         self.root.addWidget(self.chat_scroll)
         self.root.addLayout(input_row)
         self.mittig_auf_bildschirm()
@@ -143,6 +158,19 @@ class ChatView(Hauptoberflaeche):
 
     def get_btn_back(self):
         return self.btn_back
+
+    def get_btn_select_files(self):
+        return self.btn_select_files
+
+    def get_btn_clear_files(self):
+        return self.btn_clear_files
+
+    def set_selected_files(self, names: list[str]):
+        if not names:
+            self.selected_files_label.setText("Keine Dateien ausgewaehlt.")
+            return
+        label = ", ".join(names)
+        self.selected_files_label.setText(f"Ausgewaehlt: {label}")
 
     def set_send_enabled(self, enabled: bool):
         self.btn_send.setEnabled(enabled)

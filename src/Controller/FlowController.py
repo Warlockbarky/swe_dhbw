@@ -7,7 +7,17 @@ from pathlib import Path
 import requests
 from PyPDF2 import PdfReader
 from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMessageBox, QStackedWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QAbstractItemView,
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QListWidget,
+    QMessageBox,
+    QStackedWidget,
+    QVBoxLayout,
+)
 
 from View.MenueView import MenueView
 from View.LoginView import LoginView
@@ -118,6 +128,8 @@ class FlowController:
         self.ki_analyzer = KIAnalyzer()
         self.chat_messages = []
         self.current_chat_id = None
+        self.chat_file_context = []
+        self.chat_file_meta = []
         self._chat_thread = None
         self._chat_worker = None
         self.settings = QSettings("swe_dhbw", "swe_dhbw")
@@ -168,6 +180,8 @@ class FlowController:
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
         self.chat_view.get_btn_back().clicked.connect(self.__on_chat_back_clicked)
+        self.chat_view.get_btn_select_files().clicked.connect(self.__on_chat_select_files_clicked)
+        self.chat_view.get_btn_clear_files().clicked.connect(self.__on_chat_clear_files_clicked)
 
         self.history_view.get_btn_open().clicked.connect(self.__on_history_open_clicked)
         self.history_view.get_btn_delete().clicked.connect(self.__on_history_delete_clicked)
@@ -308,8 +322,11 @@ class FlowController:
             self.datei_liste_view.set_items(items)
             self.chat_messages = []
             self.current_chat_id = None
+            self.chat_file_context = []
+            self.chat_file_meta = []
             self.chat_view.clear_chat()
             self.chat_view.clear_chat_input()
+            self.chat_view.set_selected_files([])
             self.__sync_files_to_folder()
             self.stack.setCurrentWidget(self.datei_liste_view)
             return
@@ -588,37 +605,22 @@ class FlowController:
         if not self.auth_token:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
             return
-
-        idx = self.datei_liste_view.get_selected_index()
-        if idx < 0 or idx >= len(self.file_records):
-            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
-            return
-
-        record = self.file_records[idx]
-        file_id = record.get("id")
-        if file_id is None:
-            self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
-            return
-
-        name = record.get("name") or f"file_{file_id}"
         self.chat_view.clear_chat()
-        self.current_chat_id = self.__new_chat_session(title=name)
+        self.chat_view.clear_chat_input()
+        self.chat_file_context = []
+        self.chat_file_meta = []
+        self.chat_view.set_selected_files([])
+        self.current_chat_id = self.__new_chat_session(title="Chat")
         self.stack.setCurrentWidget(self.chat_view)
-        self.chat_view.set_send_enabled(False)
-        self.chat_view.start_loading()
-        self.__start_chat_worker(
-            mode="summary",
-            payload={"file_id": file_id, "name": name},
-        )
+        self.chat_view.set_send_enabled(True)
 
     def __on_chat_send_clicked(self):
-        if not self.chat_messages:
-            self.datei_liste_view.show_error("Bitte zuerst KI Chat starten.")
-            return
-
         text = self.chat_view.get_chat_input().strip()
         if not text:
             return
+
+        if not self.current_chat_id:
+            self.current_chat_id = self.__new_chat_session(title="Chat")
 
         self.chat_view.add_message("user", text)
         self.chat_view.clear_chat_input()
@@ -627,7 +629,7 @@ class FlowController:
         self.chat_view.start_loading()
         self.__start_chat_worker(
             mode="chat",
-            payload={"messages": list(self.chat_messages)},
+            payload={"messages": self.__build_chat_request_messages()},
         )
 
     def __on_chat_back_clicked(self):
@@ -647,6 +649,24 @@ class FlowController:
         entry = history[idx]
         self.current_chat_id = entry.get("id")
         self.chat_messages = entry.get("messages", [])
+        self.chat_file_meta = entry.get("files", [])
+        if self.chat_file_meta:
+            try:
+                self.chat_file_context = self.__load_chat_file_contexts(self.chat_file_meta)
+            except RuntimeError as exc:
+                self.chat_file_context = []
+                self.chat_file_meta = []
+                self.chat_view.set_selected_files([])
+                self.history_view.show_error(str(exc))
+            else:
+                names = [
+                    record.get("name") or f"file_{record.get('id')}"
+                    for record in self.chat_file_meta
+                ]
+                self.chat_view.set_selected_files(names)
+        else:
+            self.chat_file_context = []
+            self.chat_view.set_selected_files([])
         self.chat_view.clear_chat()
         self.__render_chat_messages(self.chat_messages)
         self.stack.setCurrentWidget(self.chat_view)
@@ -674,7 +694,10 @@ class FlowController:
         if self.current_chat_id == entry.get("id"):
             self.current_chat_id = None
             self.chat_messages = []
+            self.chat_file_context = []
+            self.chat_file_meta = []
             self.chat_view.clear_chat()
+            self.chat_view.set_selected_files([])
         self.history_view.set_items(self.__format_history_items(history))
 
     def __on_history_back_clicked(self):
@@ -729,6 +752,146 @@ class FlowController:
         self._chat_thread = None
         self._chat_worker = None
 
+    def __on_chat_select_files_clicked(self):
+        if not self.auth_token:
+            self.chat_view.show_error("Bitte zuerst einloggen.")
+            return
+
+        records = self.__prompt_select_files()
+        if records is None:
+            return
+
+        if not records:
+            self.__set_chat_files([])
+            return
+
+        try:
+            self.__set_chat_files(records)
+        except RuntimeError as exc:
+            self.chat_view.show_error(str(exc))
+
+    def __on_chat_clear_files_clicked(self):
+        self.__set_chat_files([])
+
+    def __prompt_select_files(self) -> list[dict] | None:
+        if not self.file_records:
+            self.chat_view.show_error("Keine Dateien verfuegbar.")
+            return None
+
+        dialog = QDialog(self.chat_view)
+        dialog.setWindowTitle("Dateien auswaehlen")
+        layout = QVBoxLayout(dialog)
+        info = QLabel("Waehle eine oder mehrere Dateien fuer den Chat.")
+        list_widget = QListWidget()
+        list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+
+        selected_ids = {str(item.get("id")) for item in self.chat_file_meta}
+        for record in self.file_records:
+            file_id = record.get("id")
+            name = record.get("name") or "Datei"
+            label = f"{file_id}: {name}" if file_id is not None else str(name)
+            list_widget.addItem(label)
+            if file_id is not None and str(file_id) in selected_ids:
+                list_widget.item(list_widget.count() - 1).setSelected(True)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(info)
+        layout.addWidget(list_widget)
+        layout.addWidget(buttons)
+
+        if dialog.exec() != dialog.DialogCode.Accepted:
+            return None
+
+        records = []
+        for item in list_widget.selectedIndexes():
+            idx = item.row()
+            if 0 <= idx < len(self.file_records):
+                records.append(self.file_records[idx])
+        return records
+
+    def __set_chat_files(self, records: list[dict]):
+        if not records:
+            self.chat_file_context = []
+            self.chat_file_meta = []
+            self.chat_view.set_selected_files([])
+            self.__persist_current_chat()
+            return
+
+        contexts = self.__load_chat_file_contexts(records)
+        self.chat_file_context = contexts
+        self.chat_file_meta = [
+            {"id": record.get("id"), "name": record.get("name")}
+            for record in records
+        ]
+        names = [record.get("name") or f"file_{record.get('id')}" for record in records]
+        self.chat_view.set_selected_files(names)
+        self.__persist_current_chat()
+
+    def __load_chat_file_contexts(self, records: list[dict]) -> list[dict]:
+        contexts = []
+        for record in records:
+            file_id = record.get("id")
+            if file_id is None:
+                raise RuntimeError("Ausgewaehlter Eintrag hat keine Datei-ID.")
+            name = record.get("name") or f"file_{file_id}"
+            text = self.__download_file_text(file_id, name)
+            contexts.append({"id": file_id, "name": name, "content": text})
+        return contexts
+
+    def __download_file_text(self, file_id: str | int, name: str) -> str:
+        resp = requests.get(
+            f"{self.api_base_url}/files/{file_id}/download",
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            timeout=30,
+        )
+        if resp.status_code == 401:
+            raise RuntimeError("Sitzung abgelaufen. Bitte erneut einloggen.")
+        if resp.status_code == 403:
+            raise RuntimeError("Kein Zugriff auf diese Datei.")
+        if resp.status_code == 404:
+            raise RuntimeError("Datei nicht gefunden.")
+        if resp.status_code != 200:
+            raise RuntimeError(f"Datei konnte nicht geladen werden (HTTP {resp.status_code}).")
+
+        content_type = resp.headers.get("Content-Type", "").lower()
+        if name.lower().endswith(".pdf") or content_type.startswith("application/pdf"):
+            reader = PdfReader(io.BytesIO(resp.content))
+            pages = [(page.extract_text() or "").strip() for page in reader.pages]
+            content = "\n".join([p for p in pages if p])
+        else:
+            content = resp.content.decode("utf-8", errors="replace")
+
+        if not content.strip():
+            raise RuntimeError("Datei enthaelt keinen lesbaren Text.")
+
+        max_chars = 12000
+        return content[:max_chars]
+
+    def __build_chat_request_messages(self) -> list[dict]:
+        system_msg = (
+            "You are a helpful assistant. Use the provided file context when relevant. "
+            "If the question is not about the file, answer normally."
+        )
+        ai_prefs = self.__build_ai_preferences()
+        if ai_prefs:
+            system_msg = f"{system_msg}\n\nUser preferences:\n{ai_prefs}"
+
+        messages = [{"role": "system", "content": system_msg}]
+        for entry in self.chat_file_context:
+            name = entry.get("name") or "Datei"
+            content = entry.get("content") or ""
+            context_msg = f"File name: {name}\n\nFile content:\n{content}"
+            messages.append({"role": "user", "content": context_msg})
+
+        messages.extend(self.chat_messages)
+        return messages
+
     def __get_settings_values(self) -> dict:
         return {
             "theme": self.settings.value("ui/theme", "Light", type=str),
@@ -781,11 +944,14 @@ class FlowController:
         chat_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.current_chat_id = chat_id
         self.chat_messages = []
+        self.chat_file_context = []
+        self.chat_file_meta = []
         history = self.__load_history()
         history.insert(0, {
             "id": chat_id,
             "title": title,
             "messages": [],
+            "files": [],
             "updated_at": datetime.now().isoformat(timespec="seconds"),
         })
         self.__save_history(history)
@@ -798,6 +964,7 @@ class FlowController:
         for entry in history:
             if entry.get("id") == self.current_chat_id:
                 entry["messages"] = list(self.chat_messages)
+                entry["files"] = list(self.chat_file_meta)
                 entry["updated_at"] = datetime.now().isoformat(timespec="seconds")
                 break
         self.__save_history(history)
