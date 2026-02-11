@@ -18,7 +18,7 @@
    - Möglichkeit hinzufügen, Details von Dateien anzuzeigen (z. B. Größe, Erstellungsdatum usw.). (done)
 
 5. **Temporäre Chats mit KI erstellen**
-   - Funktionalität hinzufügen, um temporäre Chats mit der KI zu erstellen.
+   - Funktionalität hinzufügen, um temporäre Chats mit der KI zu erstellen. (done)
 
 6. **Design und UX im KI-Chat verbessern**
    - Animationen bei der Generierung von KI-Antworten überarbeiten.

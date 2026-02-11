@@ -128,6 +128,8 @@ class FlowController:
         self.ki_analyzer = KIAnalyzer()
         self.chat_messages = []
         self.current_chat_id = None
+        self.is_temp_chat = False
+        self.chat_started = False
         self.chat_file_context = []
         self.chat_file_meta = []
         self._chat_thread = None
@@ -706,22 +708,30 @@ class FlowController:
         if not self.auth_token:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
             return
+        self.is_temp_chat = False
+        self.chat_started = False
         self.chat_view.clear_chat()
         self.chat_view.clear_chat_input()
         self.chat_file_context = []
         self.chat_file_meta = []
         self.chat_view.set_selected_files([])
-        self.current_chat_id = self.__new_chat_session(title="Chat")
+        self.current_chat_id = None
         self.stack.setCurrentWidget(self.chat_view)
         self.chat_view.set_send_enabled(True)
+        self.chat_view.set_temp_chat_checked(False)
+        self.chat_view.set_temp_chat_enabled(True)
 
     def __on_chat_send_clicked(self):
         text = self.chat_view.get_chat_input().strip()
         if not text:
             return
 
-        if not self.current_chat_id:
-            self.current_chat_id = self.__new_chat_session(title="Chat")
+        if not self.chat_started:
+            self.is_temp_chat = self.chat_view.is_temp_chat_checked()
+            if not self.is_temp_chat and not self.current_chat_id:
+                self.current_chat_id = self.__new_chat_session(title="Chat")
+            self.chat_started = True
+            self.chat_view.set_temp_chat_enabled(False)
 
         self.chat_view.add_message("user", text)
         self.chat_view.clear_chat_input()
@@ -734,6 +744,17 @@ class FlowController:
         )
 
     def __on_chat_back_clicked(self):
+        if self.is_temp_chat:
+            self.current_chat_id = None
+            self.chat_messages = []
+            self.chat_file_context = []
+            self.chat_file_meta = []
+            self.chat_view.clear_chat()
+            self.chat_view.clear_chat_input()
+            self.chat_view.set_selected_files([])
+            self.chat_view.set_temp_chat_checked(False)
+            self.chat_view.set_temp_chat_enabled(True)
+            self.chat_started = False
         self.stack.setCurrentWidget(self.datei_liste_view)
 
     def __on_history_clicked(self):
@@ -742,6 +763,8 @@ class FlowController:
         self.stack.setCurrentWidget(self.history_view)
 
     def __on_history_open_clicked(self):
+        self.is_temp_chat = False
+        self.chat_started = True
         history = self.__load_history()
         idx = self.history_view.get_selected_index()
         if idx < 0 or idx >= len(history):
@@ -771,6 +794,8 @@ class FlowController:
         self.chat_view.clear_chat()
         self.__render_chat_messages(self.chat_messages)
         self.stack.setCurrentWidget(self.chat_view)
+        self.chat_view.set_temp_chat_checked(False)
+        self.chat_view.set_temp_chat_enabled(False)
 
     def __on_history_delete_clicked(self):
         history = self.__load_history()
@@ -842,7 +867,8 @@ class FlowController:
 
         self.chat_view.set_send_enabled(True)
         self.chat_view.stop_loading_and_stream(assistant_text)
-        self.__persist_current_chat()
+        if not self.is_temp_chat and self.chat_started and self.current_chat_id:
+            self.__persist_current_chat()
 
     def __on_chat_worker_failed(self, message: str):
         self.chat_view.set_send_enabled(True)
@@ -921,7 +947,8 @@ class FlowController:
             self.chat_file_context = []
             self.chat_file_meta = []
             self.chat_view.set_selected_files([])
-            self.__persist_current_chat()
+            if not self.is_temp_chat and self.chat_started and self.current_chat_id:
+                self.__persist_current_chat()
             return
 
         contexts = self.__load_chat_file_contexts(records)
@@ -932,7 +959,8 @@ class FlowController:
         ]
         names = [record.get("name") or f"file_{record.get('id')}" for record in records]
         self.chat_view.set_selected_files(names)
-        self.__persist_current_chat()
+        if not self.is_temp_chat and self.chat_started and self.current_chat_id:
+            self.__persist_current_chat()
 
     def __load_chat_file_contexts(self, records: list[dict]) -> list[dict]:
         contexts = []
@@ -1042,6 +1070,8 @@ class FlowController:
         return "\n".join(parts)
 
     def __new_chat_session(self, *, title: str) -> str:
+        if self.is_temp_chat:
+            return ""
         chat_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.current_chat_id = chat_id
         self.chat_messages = []

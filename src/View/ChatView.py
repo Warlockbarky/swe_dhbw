@@ -20,6 +20,9 @@ class ChatView(Hauptoberflaeche):
         super().__init__()
         self.btn_back = QPushButton("Zurueck")
         self.btn_back.setObjectName("SecondaryButton")
+        self.btn_temp_chat = QPushButton("Temp Chat")
+        self.btn_temp_chat.setCheckable(True)
+        self.btn_temp_chat.setObjectName("GhostButton")
         self.btn_select_files = QPushButton("Dateien waehlen")
         self.btn_select_files.setObjectName("GhostButton")
         self.btn_clear_files = QPushButton("Auswahl loeschen")
@@ -53,11 +56,14 @@ class ChatView(Hauptoberflaeche):
         self._loading_dots = 0
         self._refresh_pending = False
         self.__fenster_erstellen()
+        self.btn_temp_chat.toggled.connect(self.__update_temp_chat_label)
+        self.__update_temp_chat_label(self.btn_temp_chat.isChecked())
 
     def __fenster_erstellen(self):
         actions = QHBoxLayout()
         actions.setSpacing(10)
         actions.addWidget(self.btn_back)
+        actions.addWidget(self.btn_temp_chat)
         actions.addStretch()
 
         files_row = QHBoxLayout()
@@ -164,6 +170,24 @@ class ChatView(Hauptoberflaeche):
 
     def get_btn_clear_files(self):
         return self.btn_clear_files
+
+    def get_btn_temp_chat(self):
+        return self.btn_temp_chat
+
+    def is_temp_chat_checked(self) -> bool:
+        return self.btn_temp_chat.isChecked()
+
+    def set_temp_chat_checked(self, checked: bool):
+        self.btn_temp_chat.setChecked(checked)
+        self.__update_temp_chat_label(checked)
+
+    def set_temp_chat_enabled(self, enabled: bool):
+        self.btn_temp_chat.setEnabled(enabled)
+
+    def __update_temp_chat_label(self, checked: bool):
+        self.btn_temp_chat.setText(
+            "Temp Chat aktiv" if checked else "Temp Chat aus"
+        )
 
     def set_selected_files(self, names: list[str]):
         if not names:
