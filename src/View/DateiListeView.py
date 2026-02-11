@@ -2,10 +2,12 @@ import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QListWidget,
+    QListWidgetItem,
     QMenu,
     QPushButton,
     QVBoxLayout,
@@ -37,6 +39,7 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_logout.setObjectName("DangerButton")
         self.btn_ai_summary.setObjectName("SecondaryButton")
         self.list_widget.setMinimumHeight(140)
+        self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.__show_context_menu)
         self.__fenster_erstellen()
@@ -67,7 +70,11 @@ class DateiListeView(Hauptoberflaeche):
 
     def set_items(self, items: list[str]):
         self.list_widget.clear()
-        self.list_widget.addItems(items)
+        for text in items:
+            item = QListWidgetItem(text)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self.list_widget.addItem(item)
 
     def get_btn_refresh(self):
         return self.btn_refresh
@@ -95,6 +102,17 @@ class DateiListeView(Hauptoberflaeche):
 
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()
+
+    def get_selected_indices(self) -> list[int]:
+        return [item.row() for item in self.list_widget.selectedIndexes()]
+
+    def get_checked_indices(self) -> list[int]:
+        indices = []
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is not None and item.checkState() == Qt.CheckState.Checked:
+                indices.append(row)
+        return indices
 
     def __show_context_menu(self, position):
         item = self.list_widget.itemAt(position)

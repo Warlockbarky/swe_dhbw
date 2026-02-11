@@ -651,58 +651,76 @@ class FlowController:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
             return
 
-        idx = self.datei_liste_view.get_selected_index()
-        if idx < 0 or idx >= len(self.file_records):
+        checked_rows = self.datei_liste_view.get_checked_indices()
+        selected_rows = self.datei_liste_view.get_selected_indices()
+        selected_rows = sorted(set(checked_rows or selected_rows))
+        if not selected_rows:
             self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
             return
 
-        record = self.file_records[idx]
-        file_id = record.get("id")
-        if file_id is None:
-            self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
+        records = []
+        for row in selected_rows:
+            if 0 <= row < len(self.file_records):
+                records.append(self.file_records[row])
+
+        if not records:
+            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
             return
 
-        name = record.get("name") or f"file_{file_id}"
+        if len(records) == 1:
+            record = records[0]
+            file_id = record.get("id")
+            name = record.get("name") or f"file_{file_id}"
+            confirm_text = f"Soll die Datei '{name}' wirklich geloescht werden?"
+        else:
+            confirm_text = f"Sollen {len(records)} Dateien wirklich geloescht werden?"
+
         confirm = QMessageBox.question(
             self.datei_liste_view,
-            "Datei loeschen",
-            f"Soll die Datei '{name}' wirklich geloescht werden?",
+            "Dateien loeschen",
+            confirm_text,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
         if confirm != QMessageBox.StandardButton.Yes:
             return
 
-        try:
-            resp = requests.delete(
-                f"{self.api_base_url}/files/{file_id}",
-                headers={"Authorization": f"Bearer {self.auth_token}"},
-                timeout=30,
-            )
-        except requests.RequestException as exc:
-            self.datei_liste_view.show_error(f"Loeschen fehlgeschlagen: {exc}")
-            return
+        errors: list[str] = []
+        for record in records:
+            file_id = record.get("id")
+            if file_id is None:
+                errors.append("Ausgewaehlter Eintrag hat keine Datei-ID.")
+                continue
+            try:
+                resp = requests.delete(
+                    f"{self.api_base_url}/files/{file_id}",
+                    headers={"Authorization": f"Bearer {self.auth_token}"},
+                    timeout=30,
+                )
+            except requests.RequestException as exc:
+                errors.append(f"Loeschen fehlgeschlagen: {exc}")
+                continue
 
-        if resp.status_code == 401:
-            self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
-            self.stack.setCurrentWidget(self.login_view)
-            return
+            if resp.status_code == 401:
+                self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+                self.stack.setCurrentWidget(self.login_view)
+                return
 
-        if resp.status_code == 403:
-            self.datei_liste_view.show_error("Kein Zugriff auf diese Datei.")
-            return
+            if resp.status_code == 403:
+                errors.append("Kein Zugriff auf diese Datei.")
+                continue
 
-        if resp.status_code == 404:
-            self.datei_liste_view.show_error("Datei nicht gefunden.")
-            return
+            if resp.status_code == 404:
+                errors.append("Datei nicht gefunden.")
+                continue
 
-        if resp.status_code >= 400:
-            self.datei_liste_view.show_error(
-                f"Loeschen fehlgeschlagen (HTTP {resp.status_code})."
-            )
-            return
+            if resp.status_code >= 400:
+                errors.append(f"Loeschen fehlgeschlagen (HTTP {resp.status_code}).")
+                continue
 
         self.__load_files_and_show()
+        if errors:
+            self.datei_liste_view.show_error("\n".join(errors))
 
     def __on_ai_summary_clicked(self):
         if not self.auth_token:
@@ -799,25 +817,40 @@ class FlowController:
 
     def __on_history_delete_clicked(self):
         history = self.__load_history()
-        idx = self.history_view.get_selected_index()
-        if idx < 0 or idx >= len(history):
+        checked_rows = self.history_view.get_checked_indices()
+        selected_rows = self.history_view.get_selected_indices()
+        selected_rows = sorted(set(checked_rows or selected_rows))
+        if not selected_rows:
             self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
             return
-        entry = history[idx]
-        title = entry.get("title") or "Chat"
+
+        entries = [history[row] for row in selected_rows if 0 <= row < len(history)]
+        if not entries:
+            self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
+            return
+
+        if len(entries) == 1:
+            title = entries[0].get("title") or "Chat"
+            confirm_text = f"Soll der Chat '{title}' wirklich geloescht werden?"
+        else:
+            confirm_text = f"Sollen {len(entries)} Chats wirklich geloescht werden?"
+
         confirm = QMessageBox.question(
             self.history_view,
             "Chat loeschen",
-            f"Soll der Chat '{title}' wirklich geloescht werden?",
+            confirm_text,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
         if confirm != QMessageBox.StandardButton.Yes:
             return
 
-        history.pop(idx)
+        removed_ids = {entry.get("id") for entry in entries}
+        for row in sorted(selected_rows, reverse=True):
+            if 0 <= row < len(history):
+                history.pop(row)
         self.__save_history(history)
-        if self.current_chat_id == entry.get("id"):
+        if self.current_chat_id in removed_ids:
             self.current_chat_id = None
             self.chat_messages = []
             self.chat_file_context = []

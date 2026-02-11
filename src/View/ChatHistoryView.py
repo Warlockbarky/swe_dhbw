@@ -1,4 +1,12 @@
-from PyQt6.QtWidgets import QHBoxLayout, QListWidget, QPushButton, QVBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from View.Hauptoberflaeche import Hauptoberflaeche
 
@@ -13,6 +21,7 @@ class ChatHistoryView(Hauptoberflaeche):
         self.btn_open.setObjectName("PrimaryButton")
         self.btn_delete.setObjectName("DangerButton")
         self.btn_back.setObjectName("SecondaryButton")
+        self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -29,10 +38,25 @@ class ChatHistoryView(Hauptoberflaeche):
 
     def set_items(self, items: list[str]):
         self.list_widget.clear()
-        self.list_widget.addItems(items)
+        for text in items:
+            item = QListWidgetItem(text)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self.list_widget.addItem(item)
 
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()
+
+    def get_selected_indices(self) -> list[int]:
+        return [item.row() for item in self.list_widget.selectedIndexes()]
+
+    def get_checked_indices(self) -> list[int]:
+        indices = []
+        for row in range(self.list_widget.count()):
+            item = self.list_widget.item(row)
+            if item is not None and item.checkState() == Qt.CheckState.Checked:
+                indices.append(row)
+        return indices
 
     def get_btn_open(self):
         return self.btn_open
