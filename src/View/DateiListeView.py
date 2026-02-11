@@ -18,6 +18,7 @@ from View.Hauptoberflaeche import Hauptoberflaeche
 
 class DateiListeView(Hauptoberflaeche):
     request_details = pyqtSignal(int)
+    request_open = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -44,6 +45,7 @@ class DateiListeView(Hauptoberflaeche):
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.__show_context_menu)
+        self.list_widget.itemDoubleClicked.connect(self.__on_item_double_clicked)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -146,6 +148,10 @@ class DateiListeView(Hauptoberflaeche):
         if selected_action == action:
             row = self.list_widget.row(item)
             self.request_details.emit(row)
+
+    def __on_item_double_clicked(self, item):
+        row = self.list_widget.row(item)
+        self.request_open.emit(row)
 
     def prompt_save_path(self, suggested_name: str, default_dir: str = "") -> str:
         initial = os.path.join(default_dir, suggested_name) if default_dir else suggested_name

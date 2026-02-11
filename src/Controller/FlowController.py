@@ -6,7 +6,8 @@ from pathlib import Path
 
 import requests
 from PyPDF2 import PdfReader
-from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal, QUrl
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QApplication,
     QAbstractItemView,
@@ -179,6 +180,7 @@ class FlowController:
         self.datei_liste_view.get_btn_delete().clicked.connect(self.__on_delete_clicked)
         self.datei_liste_view.get_btn_ai_summary().clicked.connect(self.__on_ai_summary_clicked)
         self.datei_liste_view.get_btn_select_all().clicked.connect(self.__on_files_select_all_clicked)
+        self.datei_liste_view.request_open.connect(self.__on_file_open_requested)
         self.datei_liste_view.request_details.connect(self.__on_file_details_requested)
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
@@ -190,6 +192,7 @@ class FlowController:
         self.history_view.get_btn_delete().clicked.connect(self.__on_history_delete_clicked)
         self.history_view.get_btn_select_all().clicked.connect(self.__on_history_select_all_clicked)
         self.history_view.get_btn_back().clicked.connect(self.__on_history_back_clicked)
+        self.history_view.request_open.connect(self.__on_history_open_requested)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
 
@@ -737,6 +740,20 @@ class FlowController:
         select_all = not self.datei_liste_view.are_all_checked()
         self.datei_liste_view.set_all_checked(select_all)
 
+    def __on_file_open_requested(self, row: int):
+        if not self.auth_token:
+            self.datei_liste_view.show_error("Bitte zuerst einloggen.")
+            return
+        if row < 0 or row >= len(self.file_records):
+            self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
+            return
+        record = self.file_records[row]
+        local_path = self.__ensure_local_file(record)
+        if local_path is None:
+            return
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(local_path))):
+            self.datei_liste_view.show_error("Datei konnte nicht geoeffnet werden.")
+
     def __on_ai_summary_clicked(self):
         if not self.auth_token:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
@@ -803,6 +820,18 @@ class FlowController:
         if idx < 0 or idx >= len(history):
             self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
             return
+        self.__open_history_entry(history, idx)
+
+    def __on_history_open_requested(self, row: int):
+        history = self.__load_history()
+        if row < 0 or row >= len(history):
+            self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
+            return
+        self.__open_history_entry(history, row)
+
+    def __open_history_entry(self, history: list[dict], idx: int):
+        self.is_temp_chat = False
+        self.chat_started = True
         entry = history[idx]
         self.current_chat_id = entry.get("id")
         self.chat_messages = entry.get("messages", [])
@@ -877,6 +906,62 @@ class FlowController:
     def __on_history_select_all_clicked(self):
         select_all = not self.history_view.are_all_checked()
         self.history_view.set_all_checked(select_all)
+
+    def __ensure_local_file(self, record: dict) -> Path | None:
+        target = self.__resolve_download_dir()
+        if target is None:
+            return None
+        file_id = record.get("id")
+        name = record.get("name") or ""
+        safe_name = Path(name).name or (f"file_{file_id}" if file_id is not None else "")
+        if not safe_name:
+            self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
+            return None
+        dest = target / safe_name
+        if dest.exists():
+            return dest
+
+        try:
+            resp = requests.get(
+                f"{self.api_base_url}/files/{file_id}/download",
+                headers={"Authorization": f"Bearer {self.auth_token}"},
+                timeout=60,
+                stream=True,
+            )
+        except requests.RequestException as exc:
+            self.datei_liste_view.show_error(f"Download fehlgeschlagen: {exc}")
+            return None
+
+        if resp.status_code == 401:
+            self.datei_liste_view.show_error("Sitzung abgelaufen. Bitte erneut einloggen.")
+            self.stack.setCurrentWidget(self.login_view)
+            return None
+
+        if resp.status_code == 403:
+            self.datei_liste_view.show_error("Kein Zugriff auf diese Datei.")
+            return None
+
+        if resp.status_code == 404:
+            self.datei_liste_view.show_error("Datei nicht gefunden.")
+            return None
+
+        if resp.status_code != 200:
+            self.datei_liste_view.show_error(
+                f"Download fehlgeschlagen (HTTP {resp.status_code})."
+            )
+            return None
+
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(dest, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+        except OSError as exc:
+            self.datei_liste_view.show_error(f"Datei konnte nicht gespeichert werden: {exc}")
+            return None
+
+        return dest
 
     def __on_history_back_clicked(self):
         self.stack.setCurrentWidget(self.datei_liste_view)

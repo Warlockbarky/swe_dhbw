@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -12,6 +12,8 @@ from View.Hauptoberflaeche import Hauptoberflaeche
 
 
 class ChatHistoryView(Hauptoberflaeche):
+    request_open = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.list_widget = QListWidget()
@@ -24,6 +26,7 @@ class ChatHistoryView(Hauptoberflaeche):
         self.btn_select_all.setObjectName("GhostButton")
         self.btn_back.setObjectName("SecondaryButton")
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.list_widget.itemDoubleClicked.connect(self.__on_item_double_clicked)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -88,3 +91,7 @@ class ChatHistoryView(Hauptoberflaeche):
 
     def get_btn_back(self):
         return self.btn_back
+
+    def __on_item_double_clicked(self, item):
+        row = self.list_widget.row(item)
+        self.request_open.emit(row)
