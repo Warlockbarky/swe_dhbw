@@ -6,7 +6,7 @@ from pathlib import Path
 
 import requests
 from PyPDF2 import PdfReader
-from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal, QUrl
+from PyQt6.QtCore import QObject, QSettings, QThread, QTimer, pyqtSignal, QUrl, QStandardPaths
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QApplication,
@@ -125,6 +125,7 @@ class FlowController:
 
         self.api_base_url = "http://localhost:8000"
         self.auth_token = None
+        self.current_username = None
         self.file_records = []
         self.ki_analyzer = KIAnalyzer()
         self.chat_messages = []
@@ -231,6 +232,8 @@ class FlowController:
             return
 
         if resp.status_code == 200:
+            self.current_username = username
+            self.__handle_first_login_settings()
             data = resp.json()
             token = data.get("access_token")
             if not token:
@@ -260,6 +263,7 @@ class FlowController:
 
     def __on_logout_clicked(self):
         self.auth_token = None
+        self.current_username = None
         self.file_records = []
         self.settings.remove("auth")
         self.datei_liste_view.set_items([])
@@ -1282,3 +1286,91 @@ class FlowController:
 
         # Wenn ok -> Backup starten
         self.backup_manager.starte_backup()
+
+    def __get_user_settings_file_path(self) -> Path:
+        """Gibt den Pfad zur JSON-Settings-Datei für den aktuellen Benutzer zurück."""
+        if not self.current_username:
+            raise ValueError("Kein Benutzer eingeloggt")
+
+        config_dir = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation))
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        # Sicherer Filename (nur alphanumeric und Unterstriche)
+        safe_username = "".join(c if c.isalnum() or c == "_" else "_" for c in self.current_username)
+        return config_dir / f"{safe_username}_settings.json"
+
+    def __user_settings_exist(self) -> bool:
+        """Prüft, ob Settings für den aktuellen Benutzer bereits existieren."""
+        try:
+            return self.__get_user_settings_file_path().exists()
+        except ValueError:
+            return False
+
+    def __load_user_settings(self) -> dict:
+        """Lädt benutzer-spezifische Settings aus JSON-Datei."""
+        try:
+            file_path = self.__get_user_settings_file_path()
+            if file_path.exists():
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except (IOError, json.JSONDecodeError, ValueError):
+            pass
+        return {}
+
+    def __save_user_settings(self, values: dict):
+        """Speichert benutzer-spezifische Settings in JSON-Datei."""
+        try:
+            file_path = self.__get_user_settings_file_path()
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(values, f, indent=2, ensure_ascii=False)
+        except (IOError, ValueError):
+            pass
+
+    def __handle_first_login_settings(self):
+        """Beim ersten Login: Settings-Dialog aufrufen wenn noch keine Settings existieren."""
+        if self.__user_settings_exist():
+            # Settings existieren bereits, laden und anwenden
+            user_settings = self.__load_user_settings()
+            self.__apply_user_settings_values(user_settings)
+        else:
+            # Erste Login dieses Users auf diesem Rechner: Settings-Dialog aufrufen
+            self.__show_first_time_settings_dialog()
+
+    def __show_first_time_settings_dialog(self):
+        """Zeigt den Settings-Dialog beim ersten Login an und speichert die Einstellungen."""
+        dialog = SettingsDialog(self.datei_liste_view)
+        # Defaults setzen
+        dialog.set_values(self.__get_default_settings_values())
+
+        if dialog.exec() != dialog.DialogCode.Accepted:
+            # User hat abgebrochen - defaults verwenden
+            values = self.__get_default_settings_values()
+        else:
+            values = dialog.get_values()
+
+        # Speichern in JSON
+        self.__save_user_settings(values)
+        # Speichern in QSettings (für Kompatibilität)
+        self.__save_settings_values(values)
+        # Anwenden
+        self.__apply_theme_values(values)
+
+    def __apply_user_settings_values(self, user_settings: dict):
+        """Wendet benutzer-spezifische Settings an, falls sie existieren."""
+        if user_settings:
+            # Auch in QSettings speichern (für Kompatibilität)
+            self.__save_settings_values(user_settings)
+            self.__apply_theme_values(user_settings)
+
+    def __get_default_settings_values(self) -> dict:
+        """Gibt die Standard-Settings zurück."""
+        return {
+            "theme": "Light",
+            "palette": "Emerald",
+            "default_path": "",
+            "ai_tone": "Neutral",
+            "ai_format": "Markdown",
+            "ai_length": "Medium",
+            "ai_notes": "",
+        }
+
