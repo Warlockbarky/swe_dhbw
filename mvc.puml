@@ -31,11 +31,19 @@ package "View" <<View>> {
         - __fenster_erstellen()
         + set_items(items : List)
         + get_btn_refresh()
+        + get_btn_history()
+        + get_btn_settings()
+        + get_btn_logout()
         + get_btn_upload()
         + get_btn_download()
         + get_btn_delete()
         + get_btn_ai_summary()
+        + get_btn_select_all()
         + get_selected_index() : Int
+        + get_selected_indices() : List
+        + get_checked_indices() : List
+        + set_all_checked(checked : Boolean)
+        + are_all_checked() : Boolean
         + prompt_save_path(name : String) : String
         + prompt_open_file() : String
     }
@@ -50,9 +58,16 @@ package "View" <<View>> {
         + clear_chat_input()
         + clear_chat()
         + refresh_message_sizes()
+        + set_selected_files(names : List)
         + set_send_enabled(enabled : Boolean)
         + get_btn_send()
         + get_btn_back()
+        + get_btn_select_files()
+        + get_btn_clear_files()
+        + get_btn_temp_chat()
+        + is_temp_chat_checked() : Boolean
+        + set_temp_chat_checked(checked : Boolean)
+        + set_temp_chat_enabled(enabled : Boolean)
     }
 
     class ChatHistoryView {
@@ -60,8 +75,13 @@ package "View" <<View>> {
         - __fenster_erstellen()
         + set_items(items : List)
         + get_selected_index() : Int
+        + get_selected_indices() : List
+        + get_checked_indices() : List
+        + set_all_checked(checked : Boolean)
+        + are_all_checked() : Boolean
         + get_btn_open()
         + get_btn_delete()
+        + get_btn_select_all()
         + get_btn_back()
     }
 
@@ -78,8 +98,15 @@ package "View" <<View>> {
         + MenueView()
         - __menue_fenster_erstellen()
         - __oberflaeche_bauen()
-        + get_btn_start()
-        + get_btn_stop()
+        + start_loading()
+        + show_greeting(username : String)
+        - __tick_loading()
+    }
+
+    class GradientLabel {
+        + GradientLabel(text : String)
+        + set_phase(phase : Float)
+        + paintEvent(event)
     }
 
     class Hauptoberflaeche {
@@ -113,22 +140,40 @@ package "Controller" <<Controller>> {
         - auth_token : String
         - file_records : List
         - chat_messages : List
+        - chat_file_context : List
+        - chat_file_meta : List
+        - current_chat_id : String
+        - is_temp_chat : Boolean
+        - chat_started : Boolean
         - _chat_thread : QThread
         - _chat_worker : _ChatWorker
         + run()
+        - __start_splash()
+        - __show_greeting()
         - __on_login_clicked()
         - __on_register_clicked()
         - __load_files_and_show()
         - __on_upload_clicked()
         - __on_download_clicked()
         - __on_delete_clicked()
+        - __on_files_select_all_clicked()
+        - __on_file_details_requested(row : Int)
         - __on_ai_summary_clicked()
+        - __on_chat_select_files_clicked()
+        - __on_chat_clear_files_clicked()
         - __on_chat_send_clicked()
         - __on_chat_back_clicked()
+        - __on_history_clicked()
+        - __on_history_open_clicked()
         - __start_chat_worker(mode : String, payload : Dict)
         - __on_chat_worker_finished(result : Dict)
         - __on_chat_worker_failed(message : String)
         - __on_chat_thread_finished()
+        - __on_history_delete_clicked()
+        - __on_history_select_all_clicked()
+        - __prompt_select_files() : List
+        - __set_chat_files(records : List)
+        - __download_file_text(file_id : String, name : String) : String
     }
 
     class _ChatWorker {
