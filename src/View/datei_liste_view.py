@@ -15,10 +15,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class DateiListeView(Hauptoberflaeche):
+class datei_liste_view(hauptoberflaeche):
     request_details = pyqtSignal(int)
     request_open = pyqtSignal(int)
     sort_changed = pyqtSignal(str)

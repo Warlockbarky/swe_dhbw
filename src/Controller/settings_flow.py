@@ -1,12 +1,12 @@
-from View.SettingsDialog import SettingsDialog
+from view.settings_dialog import settings_dialog
 
 
-class SettingsFlow:
+class settings_flow:
     def __init__(self, controller):
         self.controller = controller
 
     def on_settings_clicked(self):
-        dialog = SettingsDialog(self.controller.datei_liste_view)
+        dialog = settings_dialog(self.controller.datei_liste_view)
         dialog.set_values(self.get_settings_values())
         if dialog.exec() != dialog.DialogCode.Accepted:
             return
@@ -74,7 +74,7 @@ class SettingsFlow:
             self.show_first_time_settings_dialog()
 
     def show_first_time_settings_dialog(self):
-        dialog = SettingsDialog(self.controller.datei_liste_view)
+        dialog = settings_dialog(self.controller.datei_liste_view)
         dialog.set_values(self.get_default_settings_values())
 
         if dialog.exec() != dialog.DialogCode.Accepted:

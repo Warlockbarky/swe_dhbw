@@ -1,15 +1,26 @@
-class AppError(Exception):
+class app_error(Exception):
     """Basisklasse für alle Anwendungsfehler"""
     pass
 
 
-class PfadFehler(AppError):
+class pfad_fehler(app_error):
     pass
 
 
-class LoginFehler(AppError):
+class login_fehler(app_error):
     pass
 
 
-class ZeitFehler(AppError):
+class zeit_fehler(app_error):
     pass
+
+
+class schreibrechte_fehler(app_error):
+    pass
+
+
+class speicherplatz_fehler(app_error):
+    pass
+
+
+KEIN_PFAD = pfad_fehler

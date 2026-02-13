@@ -3,7 +3,7 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMessageBox
 
 
-class AuthFlow:
+class auth_flow:
     def __init__(self, controller):
         self.controller = controller
 

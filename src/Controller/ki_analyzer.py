@@ -10,31 +10,31 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 import requests
 
-from Model.Bewertung import Bewertung
-from Model.Fehlerprotokoll import Fehlerprotokoll
-from Model.Zusammenfassung import Zusammenfassung
+from model.bewertung import bewertung
+from model.fehlerprotokoll import fehlerprotokoll
+from model.zusammenfassung import zusammenfassung
 
 if TYPE_CHECKING:
-	from Model.MoodleAPI import MoodleAPI
+	from model.moodle_api import moodle_api
 
 
 @dataclass(frozen=True)
-class AnalyseErgebnis:
+class analyse_ergebnis:
 	"""Ergebnis einer Analyse für ein Skript."""
 
 	name: str
 	quelle: str
-	zusammenfassung: Zusammenfassung
-	bewertung: Bewertung
+	zusammenfassung: zusammenfassung
+	bewertung: bewertung
 	rohantwort: str | None = None
 
 
-class KIAnalyzer:
+class ki_analyzer:
 	"""Controller für KI-Analyse.
 
 	UML (MVC):
-	- Attribute: maxWiederholungen:int, aktuelleIteration:int
-	- Methoden: analyseSkripte(), bewerteZusammenfassung(), exportiereErgebnisse()
+	- Attribute: max_wiederholungen:int, aktuelle_iteration:int
+	- Methoden: analyse_skripte(), bewerte_zusammenfassung(), exportiere_ergebnisse()
 
 	LLM: OpenAI API via HTTPS (requests).
 	Konfiguration über Env Vars:
@@ -45,17 +45,17 @@ class KIAnalyzer:
 
 	def __init__(
 		self,
-		moodle_api: "MoodleAPI | None" = None,
-		maxWiederholungen: int = 3,
+		moodle_api: "moodle_api | None" = None,
+		max_wiederholungen: int = 3,
 		modell: str | None = None,
 		schwellwert: float = 0.6,
 		timeout_s: float = 60.0,
 	):
-		# MoodleAPI currently pulls an external dependency (`moodle`) which may not
+		# moodle_api currently pulls an external dependency (`moodle`) which may not
 		# be installed in all environments. We therefore keep it optional/lazy.
 		self.moodle_api = moodle_api
-		self.maxWiederholungen = int(maxWiederholungen)
-		self.aktuelleIteration = 0
+		self.max_wiederholungen = int(max_wiederholungen)
+		self.aktuelle_iteration = 0
 		self.schwellwert = float(schwellwert)
 		self.timeout_s = float(timeout_s)
 
@@ -64,7 +64,7 @@ class KIAnalyzer:
 		self._base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
 		self._modell = (modell or os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip()
 
-		self._fehlerprotokoll = Fehlerprotokoll(datum=datetime.now())
+		self._fehlerprotokoll = fehlerprotokoll(datum=datetime.now())
 
 	def _load_dotenv(self) -> None:
 		candidates = [Path.cwd() / ".env", Path(__file__).resolve().parents[2] / ".env"]
@@ -87,36 +87,38 @@ class KIAnalyzer:
 				return
 			return
 
-	def analyseSkripte(
+	def analyse_skripte(
 		self,
 		skripte: Any | None = None,
 		*,
 		prompt_sprache: str = "de",
-	) -> list[AnalyseErgebnis]:
+	) -> list[analyse_ergebnis]:
 		"""Analysiert Skripte und liefert eine Liste von Ergebnissen.
 
 		Akzeptierte Input-Formate:
-		- None: versucht Daten via MoodleAPI zu holen (falls implementiert)
+		- None: versucht Daten via moodle_api zu holen (falls implementiert)
 		- Iterable[str|Path]: Dateipfade
 		- Iterable[tuple[name, content]]
 		- Iterable[dict] mit Keys wie name/content/path
 		"""
 
 		if skripte is None:
-			# MoodleAPI ist derzeit ein Stub; wir versuchen es trotzdem.
+			# moodle_api ist derzeit ein Stub; wir versuchen es trotzdem.
 			try:
 				api = self.moodle_api
 				if api is None:
-					from Model.MoodleAPI import MoodleAPI  # local import (lazy)
-					api = MoodleAPI()
+					from model.moodle_api import moodle_api  # local import (lazy)
+					api = moodle_api()
 					self.moodle_api = api
 				skripte = api.hole_dateien()
 			except Exception as exc:  # noqa: BLE001
-				self._fehlerprotokoll.hinzufuegen(f"MoodleAPI.hole_dateien() fehlgeschlagen: {exc}")
+				self._fehlerprotokoll.hinzufuegen(
+					f"moodle_api.hole_dateien() fehlgeschlagen: {exc}"
+				)
 				skripte = []
 
 		normalisiert = self._normalisiere_skripte(skripte)
-		ergebnisse: list[AnalyseErgebnis] = []
+		ergebnisse: list[analyse_ergebnis] = []
 
 		for idx, item in enumerate(normalisiert, start=1):
 			zus_text, score, kriterien, warnings, roh = self._llm_analyse(
@@ -125,13 +127,13 @@ class KIAnalyzer:
 				prompt_sprache=prompt_sprache,
 			)
 
-			zus = Zusammenfassung(id=idx, inhalt=zus_text)
-			bew = Bewertung(score=score, kriteriumListe=kriterien, schwellwert=self.schwellwert)
+			zus = zusammenfassung(id=idx, inhalt=zus_text)
+			bew = bewertung(score=score, kriterium_liste=kriterien, schwellwert=self.schwellwert)
 			for w in warnings:
 				self._fehlerprotokoll.hinzufuegen(f"{item.name}: {w}")
 
 			ergebnisse.append(
-				AnalyseErgebnis(
+				analyse_ergebnis(
 					name=item.name,
 					quelle=item.source,
 					zusammenfassung=zus,
@@ -142,12 +144,12 @@ class KIAnalyzer:
 
 		return ergebnisse
 
-	def bewerteZusammenfassung(
+	def bewerte_zusammenfassung(
 		self,
-		zusammenfassung: Zusammenfassung,
+		zusammenfassung: zusammenfassung,
 		*,
 		prompt_sprache: str = "de",
-	) -> Bewertung:
+	) -> bewertung:
 		"""Bewertet eine bestehende Zusammenfassung per LLM (0..1)."""
 		name = f"Zusammenfassung#{zusammenfassung.id}"
 		content = zusammenfassung.inhalt
@@ -158,11 +160,11 @@ class KIAnalyzer:
 		)
 		for w in warnings:
 			self._fehlerprotokoll.hinzufuegen(f"{name}: {w}")
-		return Bewertung(score=score, kriteriumListe=kriterien, schwellwert=self.schwellwert)
+		return bewertung(score=score, kriterium_liste=kriterien, schwellwert=self.schwellwert)
 
-	def exportiereErgebnisse(
+	def exportiere_ergebnisse(
 		self,
-		ergebnisse: Iterable[AnalyseErgebnis],
+		ergebnisse: Iterable[analyse_ergebnis],
 		ziel_pfad: str | Path = "ki_analyse_ergebnisse.json",
 		*,
 		fehlerprotokoll_pfad: str | Path = "fehlerprotokoll.txt",
@@ -182,8 +184,8 @@ class KIAnalyzer:
 					"summary": e.zusammenfassung.inhalt,
 					"summary_length": e.zusammenfassung.laenge,
 					"score": e.bewertung.score,
-					"is_over_threshold": e.bewertung.istUeberSchwellwert(),
-					"criteria": e.bewertung.kriteriumListe,
+					"is_over_threshold": e.bewertung.ist_ueber_schwellwert(),
+					"criteria": e.bewertung.kriterium_liste,
 				}
 				for e in ergebnisse
 			],
@@ -198,12 +200,12 @@ class KIAnalyzer:
 	# -----------------
 
 	@dataclass(frozen=True)
-	class _SkriptItem:
+	class _skript_item:
 		name: str
 		content: str
 		source: str
 
-	def _normalisiere_skripte(self, skripte: Any) -> list[_SkriptItem]:
+	def _normalisiere_skripte(self, skripte: Any) -> list[_skript_item]:
 		if skripte is None:
 			return []
 
@@ -211,7 +213,7 @@ class KIAnalyzer:
 		if isinstance(skripte, (str, Path)):
 			skripte = [skripte]
 
-		items: list[KIAnalyzer._SkriptItem] = []
+		items: list[ki_analyzer._skript_item] = []
 		for obj in skripte:
 			if isinstance(obj, (str, Path)):
 				p = Path(obj).expanduser()
@@ -334,8 +336,8 @@ class KIAnalyzer:
 		}
 
 		last_exc: Exception | None = None
-		for attempt in range(1, max(self.maxWiederholungen, 1) + 1):
-			self.aktuelleIteration = attempt
+		for attempt in range(1, max(self.max_wiederholungen, 1) + 1):
+			self.aktuelle_iteration = attempt
 			try:
 				resp = requests.post(url, headers=headers, json=payload, timeout=self.timeout_s)
 				if resp.status_code >= 400:
@@ -349,7 +351,7 @@ class KIAnalyzer:
 				time.sleep(sleep_s)
 
 		raise RuntimeError(
-			f"OpenAI API call failed after {self.maxWiederholungen} attempts: {last_exc}"
+			f"OpenAI API call failed after {self.max_wiederholungen} attempts: {last_exc}"
 		)
 
 	def _call_openai_chat_messages(self, *, messages: list[dict[str, str]], temperature: float) -> str:
@@ -370,8 +372,8 @@ class KIAnalyzer:
 		}
 
 		last_exc: Exception | None = None
-		for attempt in range(1, max(self.maxWiederholungen, 1) + 1):
-			self.aktuelleIteration = attempt
+		for attempt in range(1, max(self.max_wiederholungen, 1) + 1):
+			self.aktuelle_iteration = attempt
 			try:
 				resp = requests.post(url, headers=headers, json=payload, timeout=self.timeout_s)
 				if resp.status_code >= 400:
@@ -385,7 +387,7 @@ class KIAnalyzer:
 				time.sleep(sleep_s)
 
 		raise RuntimeError(
-			f"OpenAI API call failed after {self.maxWiederholungen} attempts: {last_exc}"
+			f"OpenAI API call failed after {self.max_wiederholungen} attempts: {last_exc}"
 		)
 
 	def _parse_json_response(self, raw_text: str) -> tuple[dict[str, Any], list[str]]:

@@ -14,10 +14,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class ChatView(Hauptoberflaeche):
+class chat_view(hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self.btn_back = QPushButton("Zurueck")

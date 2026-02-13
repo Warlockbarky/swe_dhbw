@@ -1,12 +1,12 @@
 # TODO: implement all methods
 # but right now not possible. Have to wait for Mr Wanninger
 from moodle import Moodle
-class MoodleAPI:
+class moodle_api:
     api_url=""
     timeout=0
     kurs_liste=[]
     def __init__(self):
-        print("MoodleAPI")
+        print("moodle_api")
     def sende_anfragen(self):
         print("sendeAnfragen")
     def empfange_antwort(self):

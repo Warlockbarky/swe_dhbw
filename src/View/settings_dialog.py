@@ -12,12 +12,12 @@ from PyQt6.QtWidgets import (
 )
 
 
-class SettingsDialog(QDialog):
+class settings_dialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Einstellungen")
         self.setModal(True)
-        self.setObjectName("SettingsDialog")
+        self.setObjectName("settings_dialog")
         self.setMinimumWidth(520)
 
         self.theme_combo = QComboBox()

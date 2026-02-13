@@ -10,10 +10,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class ChatHistoryView(Hauptoberflaeche):
+class chat_history_view(hauptoberflaeche):
     request_open = pyqtSignal(int)
     sort_changed = pyqtSignal(str)
     request_rename = pyqtSignal()

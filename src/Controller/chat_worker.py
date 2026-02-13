@@ -4,7 +4,7 @@ import requests
 from PyPDF2 import PdfReader
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from Controller.KIAnalyzer import KIAnalyzer
+from controller.ki_analyzer import ki_analyzer
 
 
 def extract_text_from_downloaded_content(*, file_name: str, content_type: str, content_bytes: bytes) -> str:
@@ -21,7 +21,7 @@ def extract_text_from_downloaded_content(*, file_name: str, content_type: str, c
     return content
 
 
-class ChatWorker(QObject):
+class chat_worker(QObject):
     finished = pyqtSignal(dict)
     failed = pyqtSignal(str)
 
@@ -30,7 +30,7 @@ class ChatWorker(QObject):
         *,
         mode: str,
         payload: dict,
-        analyzer: KIAnalyzer,
+        analyzer: ki_analyzer,
         api_base_url: str,
         auth_token: str,
         ai_prefs: str,

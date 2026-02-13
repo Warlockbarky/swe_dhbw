@@ -3,49 +3,49 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QFileDialog
 
-from Model.Konfiguration import Konfiguration
-from Model.PfadValidator import PfadValidator
-import Model.Fehlertyp as Fehlertyp
+from model.konfiguration import konfiguration
+from model.pfad_validator import pfad_validator
+import model.fehlertyp as fehlertyp
 
 @dataclass(frozen=True)
-class PfadResult:
+class pfad_result:
     ok: bool
     pfad: Path | None = None
-    fehlertyp: Fehlertyp | None = None
+    fehlertyp: fehlertyp.app_error | None = None
     msg: str = ""
 
-class DateiManager:
-    def __init__(self, validator: PfadValidator):
-        self._validator = PfadValidator()
-        self.config = Konfiguration()
+class datei_manager:
+    def __init__(self, validator: pfad_validator):
+        self._validator = pfad_validator()
+        self.config = konfiguration()
         self._zielpfad: Path | None = None
 
-    def setze_und_pruefe_pfad(self, pfad_str: str) -> PfadResult:
+    def setze_und_pruefe_pfad(self, pfad_str: str) -> pfad_result:
         p = Path(pfad_str).expanduser().resolve()
 
         ok, ft, msg = self._validator.pruefe_pfad(p)
         if not ok:
-            return PfadResult(False, None, ft, msg)
+            return pfad_result(False, None, ft, msg)
 
         ok, ft, msg = self._validator.pruefe_schreibrechte(p)
         if not ok:
-            return PfadResult(False, None, ft, msg)
+            return pfad_result(False, None, ft, msg)
 
         ok, ft, msg = self._validator.pruefe_speicherplatz(p)
         if not ok:
-            return PfadResult(False, None, ft, msg)
+            return pfad_result(False, None, ft, msg)
 
         self._zielpfad = p
-        return PfadResult(True, p, None, "")
+        return pfad_result(True, p, None, "")
 
     def speichere_pfad(self, pfad: Path):
-        self._config.set_pfad(str(pfad))
-        self._config.speichere()
+        self.config.set_pfad(str(pfad))
+        self.config.speichere()
 
-    def lade_pfad_und_setze(self) -> PfadResult:
+    def lade_pfad_und_setze(self) -> pfad_result:
         pfad = self.lade_pfad()
         if pfad is None:
-            return PfadResult(False, None, Fehlertyp.KEIN_PFAD, "Kein Pfad gespeichert")
+            return pfad_result(False, None, fehlertyp.KEIN_PFAD, "Kein Pfad gespeichert")
         return self.setze_und_pruefe_pfad(str(pfad))
 
     def get_zielpfad(self) -> Path:

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 
-class Fehlerprotokoll:
+class fehlerprotokoll:
 	def __init__(
 		self,
 		datum: datetime | None = None,

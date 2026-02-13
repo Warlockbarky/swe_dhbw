@@ -3,10 +3,10 @@ from pathlib import Path
 import requests
 from PyQt6.QtWidgets import QMessageBox
 
-from Controller.file_path_service import resolve_download_dir
+from controller.file_path_service import resolve_download_dir
 
 
-class FileMutationFlow:
+class file_mutation_flow:
     def __init__(self, controller):
         self.controller = controller
 

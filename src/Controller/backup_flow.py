@@ -1,4 +1,4 @@
-class BackupFlow:
+class backup_flow:
     def __init__(self, controller):
         self.controller = controller
 

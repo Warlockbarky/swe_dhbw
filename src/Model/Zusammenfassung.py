@@ -1,4 +1,4 @@
-class Zusammenfassung:
+class zusammenfassung:
 	def __init__(self, id: int = 0, inhalt: str = "", laenge: int | None = None):
 		self.id = int(id)
 		self.inhalt = str(inhalt)

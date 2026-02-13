@@ -1,4 +1,4 @@
-class Konfiguration:
+class konfiguration:
     def __init__(self):
         self.pfad = ""
         self.dateiname=""

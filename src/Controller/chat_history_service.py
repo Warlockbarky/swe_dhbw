@@ -4,7 +4,7 @@ from datetime import datetime
 from PyQt6.QtCore import QSettings
 
 
-class ChatHistoryService:
+class chat_history_service:
     def __init__(self, settings: QSettings):
         self.settings = settings
 

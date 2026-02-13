@@ -5,11 +5,11 @@ import requests
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 
-from Controller.file_path_service import resolve_download_dir
-from Controller.file_utils import format_date, format_size
+from controller.file_path_service import resolve_download_dir
+from controller.file_utils import format_date, format_size
 
 
-class FileAccessFlow:
+class file_access_flow:
     def __init__(self, controller):
         self.controller = controller
 

@@ -3,32 +3,32 @@ import sys
 from PyQt6.QtCore import QSettings
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 
-from View.MenueView import MenueView
-from View.LoginView import LoginView
-from View.PfadView import PfadView
-from View.DateiListeView import DateiListeView
-from View.ChatView import ChatView
-from View.ChatHistoryView import ChatHistoryView
+from view.menue_view import menue_view
+from view.login_view import login_view
+from view.pfad_view import pfad_view
+from view.datei_liste_view import datei_liste_view
+from view.chat_view import chat_view
+from view.chat_history_view import chat_history_view
 
-from Model.PfadValidator import PfadValidator
-from Controller.DateiManager import DateiManager
-from Controller.BackupManager import BackupManager
-from Controller.KIAnalyzer import KIAnalyzer
-from Controller.chat_history_service import ChatHistoryService
-from Controller.user_settings_store import UserSettingsStore
+from model.pfad_validator import pfad_validator
+from controller.datei_manager import datei_manager
+from controller.backup_manager import backup_manager
+from controller.ki_analyzer import ki_analyzer
+from controller.chat_history_service import chat_history_service
+from controller.user_settings_store import user_settings_store
 
-from Controller.auth_flow import AuthFlow
-from Controller.settings_flow import SettingsFlow
-from Controller.file_list_flow import FileListFlow
-from Controller.file_access_flow import FileAccessFlow
-from Controller.file_mutation_flow import FileMutationFlow
-from Controller.chat_core_flow import ChatCoreFlow
-from Controller.chat_file_flow import ChatFileFlow
-from Controller.history_flow import HistoryFlow
-from Controller.backup_flow import BackupFlow
+from controller.auth_flow import auth_flow
+from controller.settings_flow import settings_flow
+from controller.file_list_flow import file_list_flow
+from controller.file_access_flow import file_access_flow
+from controller.file_mutation_flow import file_mutation_flow
+from controller.chat_core_flow import chat_core_flow
+from controller.chat_file_flow import chat_file_flow
+from controller.history_flow import history_flow
+from controller.backup_flow import backup_flow
 
 
-class FlowController:
+class flow_controller:
     def __init__(self):
         self.app = QApplication(sys.argv)
 
@@ -39,7 +39,7 @@ class FlowController:
         self.visible_file_records = []
         self.file_sort_mode = "Name (A-Z)"
         self.file_search_query = ""
-        self.ki_analyzer = KIAnalyzer()
+        self.ki_analyzer = ki_analyzer()
         self.chat_messages = []
         self.current_chat_id = None
         self.is_temp_chat = False
@@ -52,15 +52,15 @@ class FlowController:
         self._chat_thread = None
         self._chat_worker = None
         self.settings = QSettings("swe_dhbw", "swe_dhbw")
-        self.history_service = ChatHistoryService(self.settings)
-        self.user_settings_store = UserSettingsStore("swe_dhbw")
+        self.history_service = chat_history_service(self.settings)
+        self.user_settings_store = user_settings_store("swe_dhbw")
 
-        self.start_view = MenueView()
-        self.login_view = LoginView()
-        self.pfad_view = PfadView()
-        self.datei_liste_view = DateiListeView()
-        self.chat_view = ChatView()
-        self.history_view = ChatHistoryView()
+        self.start_view = menue_view()
+        self.login_view = login_view()
+        self.pfad_view = pfad_view()
+        self.datei_liste_view = datei_liste_view()
+        self.chat_view = chat_view()
+        self.history_view = chat_history_view()
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.start_view)
@@ -70,19 +70,19 @@ class FlowController:
         self.stack.addWidget(self.chat_view)
         self.stack.addWidget(self.history_view)
 
-        self.pfad_validator = PfadValidator()
-        self.datei_manager = DateiManager(self.pfad_validator)
-        self.backup_manager = BackupManager(self.datei_manager)
+        self.pfad_validator = pfad_validator()
+        self.datei_manager = datei_manager(self.pfad_validator)
+        self.backup_manager = backup_manager(self.datei_manager)
 
-        self.settings_flow = SettingsFlow(self)
-        self.auth_flow = AuthFlow(self)
-        self.file_list_flow = FileListFlow(self)
-        self.file_access_flow = FileAccessFlow(self)
-        self.file_mutation_flow = FileMutationFlow(self)
-        self.chat_core_flow = ChatCoreFlow(self)
-        self.chat_file_flow = ChatFileFlow(self)
-        self.history_flow = HistoryFlow(self)
-        self.backup_flow = BackupFlow(self)
+        self.settings_flow = settings_flow(self)
+        self.auth_flow = auth_flow(self)
+        self.file_list_flow = file_list_flow(self)
+        self.file_access_flow = file_access_flow(self)
+        self.file_mutation_flow = file_mutation_flow(self)
+        self.chat_core_flow = chat_core_flow(self)
+        self.chat_file_flow = chat_file_flow(self)
+        self.history_flow = history_flow(self)
+        self.backup_flow = backup_flow(self)
 
         self.__setup_connections()
         self.auth_flow.load_saved_credentials()

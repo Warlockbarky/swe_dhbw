@@ -3,7 +3,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import QMessageBox, QInputDialog
 
 
-class HistoryFlow:
+class history_flow:
     def __init__(self, controller):
         self.controller = controller
 

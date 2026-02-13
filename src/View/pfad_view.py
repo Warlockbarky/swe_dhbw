@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class PfadView(Hauptoberflaeche):
+class pfad_view(hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self.path_edit = QLineEdit()

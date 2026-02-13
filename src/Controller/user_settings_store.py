@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
 
 
-class UserSettingsStore:
+class user_settings_store:
     def __init__(self, app_namespace: str):
         self.app_namespace = app_namespace
 

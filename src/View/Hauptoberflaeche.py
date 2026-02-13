@@ -3,7 +3,7 @@ from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QWidget
 
 
-class Hauptoberflaeche(QWidget):
+class hauptoberflaeche(QWidget):
     def __init__(self, title: str = "", width: int = 1200, height: int = 800):
         super().__init__()
         self.setObjectName("MainWindow")
@@ -25,7 +25,7 @@ class Hauptoberflaeche(QWidget):
     def show_error(self, msg: str):
         print("ERROR:", msg)
         QMessageBox.critical(self, "Fehler", msg)
-    def show_UI(self):
+    def show_ui(self):
         self.show()
 
     @staticmethod
@@ -157,8 +157,8 @@ class Hauptoberflaeche(QWidget):
                 border: 1px solid {colors['border']};
                 border-radius: 12px;
             }}
-            QWidget#LoginView QFrame#Card,
-            QDialog#SettingsDialog QFrame#Card {{
+            QWidget#login_view QFrame#Card,
+            QDialog#settings_dialog QFrame#Card {{
                 background: transparent;
             }}
             QFrame#Sidebar {{

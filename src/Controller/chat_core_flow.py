@@ -1,9 +1,9 @@
 from PyQt6.QtCore import QThread
 
-from Controller.chat_worker import ChatWorker
+from controller.chat_worker import chat_worker
 
 
-class ChatCoreFlow:
+class chat_core_flow:
     def __init__(self, controller):
         self.controller = controller
 
@@ -64,7 +64,7 @@ class ChatCoreFlow:
         if self.controller._chat_thread is not None and self.controller._chat_thread.isRunning():
             return
         thread = QThread()
-        worker = ChatWorker(
+        worker = chat_worker(
             mode=mode,
             payload=payload,
             analyzer=self.controller.ki_analyzer,

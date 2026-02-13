@@ -1,13 +1,13 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class LoginView(Hauptoberflaeche):
+class login_view(hauptoberflaeche):
     def __init__(self):
         super().__init__()
-        self.setObjectName("LoginView")
+        self.setObjectName("login_view")
         self.btn_login = None
         self.btn_register = None
         self.remember_me = QCheckBox("Angemeldet bleiben")

@@ -1,6 +1,6 @@
 import requests
 
-from Controller.file_utils import (
+from controller.file_utils import (
     file_extension,
     format_date,
     format_size,
@@ -9,7 +9,7 @@ from Controller.file_utils import (
 )
 
 
-class FileListFlow:
+class file_list_flow:
     def __init__(self, controller):
         self.controller = controller
 

@@ -8,10 +8,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from Controller.chat_worker import extract_text_from_downloaded_content
+from controller.chat_worker import extract_text_from_downloaded_content
 
 
-class ChatFileFlow:
+class chat_file_flow:
     def __init__(self, controller):
         self.controller = controller
 

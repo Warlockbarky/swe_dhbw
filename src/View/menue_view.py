@@ -4,10 +4,10 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QVBoxLayout, QWidget
 
-from View.Hauptoberflaeche import Hauptoberflaeche
+from view.hauptoberflaeche import hauptoberflaeche
 
 
-class GradientLabel(QLabel):
+class gradient_label(QLabel):
     def __init__(self, text: str = "", parent=None):
         super().__init__(text, parent)
         self._phase = 0.0
@@ -45,7 +45,7 @@ class GradientLabel(QLabel):
         painter.drawText(rect, self.alignment(), text)
 
 
-class MenueView(Hauptoberflaeche):
+class menue_view(hauptoberflaeche):
     def __init__(self):
         super().__init__()
         self._dot_timer = QTimer(self)
@@ -58,7 +58,7 @@ class MenueView(Hauptoberflaeche):
         self.title.setObjectName("SplashTitle")
         self.greeting_prefix = QLabel("")
         self.greeting_prefix.setObjectName("SplashGreetingPrefix")
-        self.greeting_name = GradientLabel("")
+        self.greeting_name = gradient_label("")
         self.greeting_name.setObjectName("SplashGreetingName")
         self.greeting_row = QWidget()
         self.greeting_row.setVisible(False)
