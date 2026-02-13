@@ -86,19 +86,11 @@ class chat_core_flow:
         thread.start()
 
     def on_chat_worker_finished(self, result: dict):
-        mode = result.get("mode")
         assistant_text = result.get("assistant", "")
-        if mode == "summary":
-            self.controller.chat_messages = result.get("messages", [])
-            if assistant_text:
-                self.controller.chat_messages.append(
-                    {"role": "assistant", "content": assistant_text}
-                )
-        else:
-            if assistant_text:
-                self.controller.chat_messages.append(
-                    {"role": "assistant", "content": assistant_text}
-                )
+        if assistant_text:
+            self.controller.chat_messages.append(
+                {"role": "assistant", "content": assistant_text}
+            )
 
         self.controller.chat_view.set_send_enabled(True)
         self.controller.chat_view.stop_loading_and_stream(assistant_text)

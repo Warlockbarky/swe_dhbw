@@ -3,7 +3,6 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QFileDialog
 
-from model.konfiguration import konfiguration
 from model.pfad_validator import pfad_validator
 import model.fehlertyp as fehlertyp
 
@@ -17,7 +16,6 @@ class pfad_result:
 class datei_manager:
     def __init__(self, validator: pfad_validator):
         self._validator = pfad_validator()
-        self.config = konfiguration()
         self._zielpfad: Path | None = None
 
     def setze_und_pruefe_pfad(self, pfad_str: str) -> pfad_result:
@@ -37,16 +35,6 @@ class datei_manager:
 
         self._zielpfad = p
         return pfad_result(True, p, None, "")
-
-    def speichere_pfad(self, pfad: Path):
-        self.config.set_pfad(str(pfad))
-        self.config.speichere()
-
-    def lade_pfad_und_setze(self) -> pfad_result:
-        pfad = self.lade_pfad()
-        if pfad is None:
-            return pfad_result(False, None, fehlertyp.KEIN_PFAD, "Kein Pfad gespeichert")
-        return self.setze_und_pruefe_pfad(str(pfad))
 
     def get_zielpfad(self) -> Path:
         if self._zielpfad is None:
