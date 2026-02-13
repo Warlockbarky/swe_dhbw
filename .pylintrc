@@ -1,0 +1,29 @@
+[MASTER]
+ignore=__pycache__
+extension-pkg-allow-list=PyQt6
+
+[FORMAT]
+max-line-length=140
+
+[BASIC]
+class-naming-style=snake_case
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    too-many-instance-attributes,
+    too-many-arguments,
+    too-many-branches,
+    too-many-locals,
+    too-many-return-statements,
+    too-many-statements,
+    duplicate-code,
+    protected-access,
+    no-name-in-module,
+    disallowed-name,
+    fixme,
+    redefined-outer-name,
+    broad-except

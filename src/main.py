@@ -1,5 +1,7 @@
-from Controller.FlowController import FlowController
+"""Application entry point for launching the GUI."""
+
+from controller.flow_controller import flow_controller
 
 
 if __name__ == "__main__":
-    FlowController().run()
+    flow_controller().run()

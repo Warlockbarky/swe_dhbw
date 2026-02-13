@@ -1,0 +1,331 @@
+@startuml
+
+skinparam linetype ortho
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+
+' Farbeinstellungen fuer MVC
+skinparam package {
+    BackgroundColor<<Model>> #D6EAF8
+    BackgroundColor<<View>> #D5F5E3
+    BackgroundColor<<Controller>> #FCF3CF
+}
+
+title Systemklassendiagramm - MVC-Architektur
+
+' --- VIEW PAKET ---
+package "View" <<View>> {
+
+    class login_view {
+        + login_view()
+        - __login_fenster_erstellen()
+        - __formular_erstellen()
+        + get_username() : String
+        + get_password() : String
+        + get_btn_login()
+        + get_btn_register()
+    }
+
+    class datei_liste_view {
+        + datei_liste_view()
+        - __fenster_erstellen()
+        + set_items(items : List)
+        + get_btn_refresh()
+        + get_btn_history()
+        + get_btn_settings()
+        + get_btn_logout()
+        + get_btn_upload()
+        + get_btn_download()
+        + get_btn_delete()
+        + get_btn_ai_summary()
+        + get_btn_select_all()
+        + get_selected_index() : Int
+        + get_selected_indices() : List
+        + get_checked_indices() : List
+        + set_all_checked(checked : Boolean)
+        + are_all_checked() : Boolean
+        + prompt_save_path(name : String) : String
+        + prompt_open_file() : String
+    }
+
+    class chat_view {
+        + chat_view()
+        - __fenster_erstellen()
+        + add_message(role : String, text : String)
+        + start_loading()
+        + stop_loading_and_stream(text : String)
+        + get_chat_input() : String
+        + clear_chat_input()
+        + clear_chat()
+        + refresh_message_sizes()
+        + set_selected_files(names : List)
+        + set_send_enabled(enabled : Boolean)
+        + get_btn_send()
+        + get_btn_back()
+        + get_btn_select_files()
+        + get_btn_clear_files()
+        + get_btn_temp_chat()
+        + is_temp_chat_checked() : Boolean
+        + set_temp_chat_checked(checked : Boolean)
+        + set_temp_chat_enabled(enabled : Boolean)
+    }
+
+    class chat_history_view {
+        + chat_history_view()
+        - __fenster_erstellen()
+        + set_items(items : List)
+        + get_selected_index() : Int
+        + get_selected_indices() : List
+        + get_checked_indices() : List
+        + set_all_checked(checked : Boolean)
+        + are_all_checked() : Boolean
+        + get_btn_open()
+        + get_btn_delete()
+        + get_btn_select_all()
+        + get_btn_back()
+    }
+
+    class pfad_view {
+        + pfad_view()
+        - __pfad_fenster_erstellen()
+        - __update_ok_button(text : String)
+        - __browse()
+        + get_path() : String
+        + get_btn_ok()
+    }
+
+    class menue_view {
+        + menue_view()
+        - __menue_fenster_erstellen()
+        - __oberflaeche_bauen()
+        + start_loading()
+        + show_greeting(username : String)
+        - __tick_loading()
+    }
+
+    class gradient_label {
+        + gradient_label(text : String)
+        + set_phase(phase : Float)
+        + paintEvent(event)
+    }
+
+    class hauptoberflaeche {
+        + mittig_auf_bildschirm()
+        + show_error(msg : String)
+        + show_ui()
+        + apply_theme(theme : String, palette : String)
+        + build_stylesheet(theme : String, palette : String) : String
+        + build_palette(theme : String, palette : String)
+    }
+
+    class settings_dialog {
+        + settings_dialog(parent)
+        - __build_ui()
+        - __choose_path()
+        + set_values(values : Dict)
+        + get_values() : Dict
+    }
+
+        note right of hauptoberflaeche
+      Hauptbenutzeroberflaeche,
+      die von den Controllern
+      aktualisiert wird
+    end note
+}
+
+' --- CONTROLLER PAKET ---
+package "Controller" <<Controller>> {
+    class flow_controller {
+        - api_base_url : String
+        - auth_token : String
+        - current_username : String
+        - file_records : List
+        - visible_file_records : List
+        - chat_messages : List
+        - chat_file_context : List
+        - chat_file_meta : List
+        - current_chat_id : String
+        - is_temp_chat : Boolean
+        - chat_started : Boolean
+        - _chat_thread : QThread
+        - _chat_worker : chat_worker
+        + run()
+        - __setup_connections()
+    }
+
+    class auth_flow {
+        + start_splash()
+        + load_saved_credentials()
+        + on_login_clicked()
+        + on_register_clicked()
+        + on_logout_clicked()
+    }
+
+    class settings_flow {
+        + apply_saved_theme()
+        + on_settings_clicked()
+        + build_ai_preferences() : String
+    }
+
+    class file_list_flow {
+        + load_files_and_show()
+        + on_file_details_requested(row : Int)
+        + on_files_select_all_clicked()
+        + on_file_sort_changed(mode : String)
+        + on_file_search_changed(query : String)
+    }
+
+    class file_access_flow {
+        + on_download_clicked()
+        + on_file_open_requested(row : Int)
+    }
+
+    class file_mutation_flow {
+        + on_upload_clicked()
+        + on_delete_clicked()
+        + sync_files_to_folder()
+    }
+
+    class chat_core_flow {
+        + on_ai_summary_clicked()
+        + on_chat_send_clicked()
+        + on_chat_back_clicked()
+        + start_chat_worker(mode : String, payload : Dict)
+    }
+
+    class chat_file_flow {
+        + on_chat_select_files_clicked()
+        + on_chat_clear_files_clicked()
+    }
+
+    class history_flow {
+        + on_history_clicked()
+        + on_history_open_clicked()
+        + on_history_delete_clicked()
+        + on_history_select_all_clicked()
+        + on_history_rename_clicked()
+        + on_history_sort_changed(mode : String)
+        + on_history_search_changed(query : String)
+    }
+
+    class backup_flow {
+        + on_pfad_ok()
+    }
+
+    class chat_worker {
+        - mode : String
+        - payload : Dict
+        - api_base_url : String
+        - auth_token : String
+        + run()
+    }
+
+    class datei_manager {
+        - _zielpfad : Path
+        + setze_und_pruefe_pfad(pfad_str : String)
+        + get_zielpfad() : Path
+        + speichere_datei(rel_name : String, data : Bytes) : Path
+    }
+
+    class backup_manager {
+        + starte_backup()
+    }
+
+    class ki_analyzer {
+        - max_wiederholungen : Int
+        - aktuelle_iteration : Int
+        + chat(messages : List) : String
+    }
+
+    class chat_history_service {
+        + create_chat_session(title : String, files : List) : String
+        + update_chat_session(chat_id : String, messages : List, files : List)
+        + list_chat_sessions() : List
+        + delete_chat_sessions(ids : List)
+        + rename_chat_session(chat_id : String, title : String)
+    }
+
+    class user_settings_store {
+        + load_user() : Dict
+        + save_user(values : Dict)
+        + clear_user()
+    }
+
+    class file_path_service {
+        + resolve_download_dir()
+    }
+
+    class file_utils {
+        + normalize_file_records(records : List) : List
+        + file_sort_key(mode : String)
+        + build_file_label(record : Dict) : String
+    }
+}
+
+' --- MODEL PAKET ---
+package "Model" <<Model>> {
+    class pfad_validator {
+        + pruefe_pfad(pfad : String) : Boolean
+        + pruefe_schreibrechte(pfad : String) : Boolean
+        + pruefe_speicherplatz(pfad : String) : Boolean
+    }
+
+    class fehlertyp {
+        + pfad_fehler
+        + login_fehler
+        + zeit_fehler
+        + schreibrechte_fehler
+        + speicherplatz_fehler
+    }
+}
+
+' --- BEZIEHUNGEN (Relationships) ---
+
+' View Klassen erben von hauptoberflaeche
+login_view --|> hauptoberflaeche
+pfad_view --|> hauptoberflaeche
+menue_view --|> hauptoberflaeche
+datei_liste_view --|> hauptoberflaeche
+chat_view --|> hauptoberflaeche
+chat_history_view --|> hauptoberflaeche
+
+' View -> Controller (Benutzer initiiert Aktionen)
+login_view ..> flow_controller : nutzt
+menue_view ..> flow_controller : nutzt
+pfad_view ..> flow_controller : nutzt
+datei_liste_view ..> flow_controller : nutzt
+chat_view ..> flow_controller : nutzt
+chat_history_view ..> flow_controller : nutzt
+
+' Controller -> View (Aktualisierung der Oberflaeche)
+flow_controller --> login_view : steuert
+flow_controller --> menue_view : steuert
+flow_controller --> pfad_view : steuert
+flow_controller --> datei_liste_view : steuert
+flow_controller --> chat_view : steuert
+flow_controller --> chat_history_view : steuert
+flow_controller --> settings_dialog : oeffnet
+
+' Controller -> Controller (Interaktion zwischen Controllern)
+flow_controller --> auth_flow
+flow_controller --> settings_flow
+flow_controller --> file_list_flow
+flow_controller --> file_access_flow
+flow_controller --> file_mutation_flow
+flow_controller --> chat_core_flow
+flow_controller --> chat_file_flow
+flow_controller --> history_flow
+flow_controller --> backup_flow
+
+flow_controller --> datei_manager : verwaltet Pfade
+flow_controller --> backup_manager : startet Backup
+flow_controller --> ki_analyzer : KI-Chat
+flow_controller --> chat_history_service : Chat-Historie
+flow_controller --> user_settings_store : Nutzerwerte
+
+chat_core_flow --> chat_worker : startet Hintergrundjob
+chat_worker --> ki_analyzer
+
+datei_manager --> pfad_validator
+
+@enduml
