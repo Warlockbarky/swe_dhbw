@@ -1,3 +1,5 @@
+import math
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
@@ -221,7 +223,7 @@ class ChatView(Hauptoberflaeche):
         view.setContentsMargins(0, 0, 0, 0)
         view.document().setDocumentMargin(0)
         view.document().contentsChanged.connect(
-            lambda v=view: self._sync_message_size(v)
+            lambda v=view: self._on_message_contents_changed(v)
         )
         bubble_layout.addWidget(view)
 
@@ -238,13 +240,17 @@ class ChatView(Hauptoberflaeche):
         self._sync_message_size(view)
         return view
 
+    def _on_message_contents_changed(self, view: QTextBrowser):
+        self._sync_message_size(view)
+        QTimer.singleShot(0, lambda v=view: self._sync_message_size(v))
+
     @staticmethod
     def _sync_message_size(view: QTextBrowser):
         doc = view.document()
         doc.setTextWidth(-1)
         doc_width = int(doc.idealWidth())
-        margins = view.contentsMargins()
-        padding = margins.top() + margins.bottom()
+        view_margins = view.contentsMargins()
+        padding = view_margins.top() + view_margins.bottom()
         extra = view.frameWidth() * 2
 
         role = view.property("role")
@@ -256,13 +262,13 @@ class ChatView(Hauptoberflaeche):
             min_width = 0
             max_width = 520
 
-        target_width = max(min_width, min(max_width, doc_width + 24))
+        target_width = max(min_width, min(max_width, doc_width + 2))
         view.setMinimumWidth(target_width)
         view.setMaximumWidth(target_width)
         doc.setTextWidth(target_width)
 
-        doc_height = int(doc.documentLayout().documentSize().height())
-        target_height = doc_height + padding + extra
+        doc_height = math.ceil(doc.documentLayout().documentSize().height())
+        target_height = doc_height + padding + extra + 4
         view.setMinimumHeight(target_height)
         view.setMaximumHeight(target_height)
 
@@ -271,14 +277,16 @@ class ChatView(Hauptoberflaeche):
             layout = bubble.layout()
             if layout is not None:
                 margins = layout.contentsMargins()
+                bubble_horizontal_padding = margins.left() + margins.right()
                 bubble_padding = margins.top() + margins.bottom()
             else:
+                bubble_horizontal_padding = 24
                 bubble_padding = 16
             bubble_height = target_height + bubble_padding
             bubble.setMinimumHeight(bubble_height)
             bubble.setMaximumHeight(bubble_height)
-            bubble.setMinimumWidth(target_width + 24)
-            bubble.setMaximumWidth(target_width + 24)
+            bubble.setMinimumWidth(target_width + bubble_horizontal_padding)
+            bubble.setMaximumWidth(target_width + bubble_horizontal_padding)
 
     def _start_typing(self, label: QTextBrowser, text: str, *, markdown: bool):
         self._typing_label = label
