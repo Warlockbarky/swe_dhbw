@@ -196,4 +196,3 @@ class datei_liste_view(hauptoberflaeche):
             default_dir,
         )
         return path
-

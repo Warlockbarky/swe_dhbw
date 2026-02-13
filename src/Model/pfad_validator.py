@@ -1,6 +1,7 @@
-from pathlib import Path
 import os
-import model.fehlertyp as fehlertyp
+from pathlib import Path
+
+from model import fehlertyp
 
 class pfad_validator:
     def pruefe_pfad(self, p: Path):

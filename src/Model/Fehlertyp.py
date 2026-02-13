@@ -1,26 +1,25 @@
 class app_error(Exception):
-    """Basisklasse für alle Anwendungsfehler"""
-    pass
+    """Basisklasse für alle Anwendungsfehler."""
 
 
 class pfad_fehler(app_error):
-    pass
+    """Fehler im Zusammenhang mit Pfaden."""
 
 
 class login_fehler(app_error):
-    pass
+    """Fehler beim Login oder bei der Authentifizierung."""
 
 
 class zeit_fehler(app_error):
-    pass
+    """Fehler mit Zeitbezug (Timeouts, etc.)."""
 
 
 class schreibrechte_fehler(app_error):
-    pass
+    """Fehler bei fehlenden Schreibrechten."""
 
 
 class speicherplatz_fehler(app_error):
-    pass
+    """Fehler bei zu wenig Speicherplatz."""
 
 
-KEIN_PFAD = pfad_fehler
+kein_pfad = pfad_fehler

@@ -1,8 +1,8 @@
 import math
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPalette, QPen
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QVBoxLayout, QWidget
+from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPen
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
 from view.hauptoberflaeche import hauptoberflaeche
 
@@ -16,7 +16,7 @@ class gradient_label(QLabel):
         self._phase = phase
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):  # pylint: disable=invalid-name
         text = self.text()
         if not text:
             return

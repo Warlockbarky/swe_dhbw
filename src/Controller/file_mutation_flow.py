@@ -28,13 +28,13 @@ class file_mutation_flow:
                     files={"file": handle},
                     timeout=60,
                 )
+        except requests.RequestException as exc:
+            self.controller.datei_liste_view.show_error(f"Upload fehlgeschlagen: {exc}")
+            return
         except OSError as exc:
             self.controller.datei_liste_view.show_error(
                 f"Datei konnte nicht gelesen werden: {exc}"
             )
-            return
-        except requests.RequestException as exc:
-            self.controller.datei_liste_view.show_error(f"Upload fehlgeschlagen: {exc}")
             return
 
         if resp.status_code == 401:

@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from PyQt6.QtWidgets import QFileDialog
-
+from model import fehlertyp
 from model.pfad_validator import pfad_validator
-import model.fehlertyp as fehlertyp
 
 @dataclass(frozen=True)
 class pfad_result:
@@ -15,7 +13,7 @@ class pfad_result:
 
 class datei_manager:
     def __init__(self, validator: pfad_validator):
-        self._validator = pfad_validator()
+        self._validator = validator
         self._zielpfad: Path | None = None
 
     def setze_und_pruefe_pfad(self, pfad_str: str) -> pfad_result:

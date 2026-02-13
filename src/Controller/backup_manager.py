@@ -16,8 +16,8 @@ class backup_result:
 
 
 class backup_manager:
-    def __init__(self, datei_manager: datei_manager):
-        self._dm = datei_manager
+    def __init__(self, dm: datei_manager):
+        self._dm = dm
 
     def starte_backup(self) -> backup_result:
         try:
@@ -27,7 +27,6 @@ class backup_manager:
 
         try:
             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            # TODO: richtige Datei Backupen (aktuell nur Testdatei)
             rel_name = f"backup_{ts}.txt"
 
             content = (

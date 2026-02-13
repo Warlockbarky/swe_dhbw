@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
-    QVBoxLayout,
 )
 
 from view.hauptoberflaeche import hauptoberflaeche

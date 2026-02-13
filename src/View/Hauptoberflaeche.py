@@ -1,4 +1,3 @@
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QWidget
 
@@ -71,8 +70,6 @@ class hauptoberflaeche(QWidget):
             }
 
         accent, accent_hover, accent_press = accents.get(palette, accents["emerald"])
-        focus_ring = "rgba(37, 99, 235, 0.25)" if palette == "blue" else "rgba(16, 185, 129, 0.25)"
-
         return {
             "theme": theme,
             "palette": palette,
@@ -80,7 +77,6 @@ class hauptoberflaeche(QWidget):
             "accent": accent,
             "accent_hover": accent_hover,
             "accent_press": accent_press,
-            "focus_ring": focus_ring,
         }
 
     @classmethod
@@ -90,8 +86,6 @@ class hauptoberflaeche(QWidget):
         accent = tokens["accent"]
         accent_hover = tokens["accent_hover"]
         accent_press = tokens["accent_press"]
-        focus_ring = tokens["focus_ring"]
-
         return f"""
             /* Base */
             QWidget {{

@@ -353,5 +353,5 @@ class chat_view(hauptoberflaeche):
         self._loading_label = None
 
     def _scroll_to_bottom(self):
-        bar = self.chat_scroll.verticalScrollBar()
-        bar.setValue(bar.maximum())
+        scroll_bar = self.chat_scroll.verticalScrollBar()
+        scroll_bar.setValue(scroll_bar.maximum())
