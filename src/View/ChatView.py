@@ -98,6 +98,7 @@ class ChatView(Hauptoberflaeche):
         self._stop_typing(finalize=True)
         self._stop_loading(finalize=False)
         label = self._create_message_row("assistant")
+        label.setProperty("loading", True)
         self._loading_label = label
         self._loading_dots = 0
         label.setPlainText("...")
@@ -109,6 +110,7 @@ class ChatView(Hauptoberflaeche):
             self.add_message("assistant", text, stream=True)
             return
         label = self._loading_label
+        label.setProperty("loading", False)
         self._stop_loading(finalize=False)
         self._start_typing(label, text, markdown=True)
 
@@ -246,8 +248,9 @@ class ChatView(Hauptoberflaeche):
         extra = view.frameWidth() * 2
 
         role = view.property("role")
+        is_loading = bool(view.property("loading"))
         if role == "assistant":
-            min_width = 220
+            min_width = 0 if is_loading else 220
             max_width = 700
         else:
             min_width = 0
@@ -324,6 +327,7 @@ class ChatView(Hauptoberflaeche):
         if self._loading_label is None:
             return
         self._loading_timer.stop()
+        self._loading_label.setProperty("loading", False)
         if finalize:
             self._loading_label.setText("")
         self._loading_label = None
