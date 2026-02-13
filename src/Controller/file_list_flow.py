@@ -1,3 +1,5 @@
+"""File list retrieval and presentation logic."""
+
 import requests
 
 from controller.file_utils import (
@@ -10,10 +12,16 @@ from controller.file_utils import (
 
 
 class file_list_flow:
+    """Handles listing, sorting, and filtering remote files."""
     def __init__(self, controller):
         self.controller = controller
 
     def load_files_and_show(self):
+        """Fetch file list from the API and refresh the UI state.
+
+        Returns:
+            None
+        """
         if not self.controller.auth_token:
             self.controller.login_view.show_error("Bitte zuerst einloggen.")
             return

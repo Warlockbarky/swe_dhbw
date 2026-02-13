@@ -1,3 +1,5 @@
+"""Backup manager that writes a demo backup file to the target folder."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,10 +18,16 @@ class backup_result:
 
 
 class backup_manager:
+    """Writes a small backup artifact to validate the backup pipeline."""
     def __init__(self, dm: datei_manager):
         self._dm = dm
 
     def starte_backup(self) -> backup_result:
+        """Create a demo backup file under the validated target directory.
+
+        Returns:
+            backup_result: Outcome metadata for the backup attempt.
+        """
         try:
             zielordner = self._dm.get_zielpfad()
         except Exception as e:

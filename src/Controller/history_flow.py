@@ -1,9 +1,12 @@
+"""Chat history listing, filtering, and mutation flow."""
+
 from datetime import datetime
 
 from PyQt6.QtWidgets import QMessageBox, QInputDialog
 
 
 class history_flow:
+    """Handles history view actions and persistence updates."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -124,6 +127,11 @@ class history_flow:
         self.refresh_history_view()
 
     def refresh_history_view(self):
+        """Refresh the history list with current sorting and filters applied.
+
+        Returns:
+            None
+        """
         history = self.controller.history_service.load()
         sorted_entries = self.controller.history_service.sort(
             history, self.controller.history_sort_mode

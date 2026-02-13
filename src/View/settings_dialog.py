@@ -1,3 +1,5 @@
+"""Settings dialog that collects UI and AI preference options."""
+
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -13,6 +15,7 @@ from PyQt6.QtWidgets import (
 
 
 class settings_dialog(QDialog):
+    """Modal dialog for editing UI theme and AI preferences."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Einstellungen")

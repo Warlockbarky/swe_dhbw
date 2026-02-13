@@ -1,3 +1,5 @@
+"""Login screen UI and input accessors."""
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
@@ -5,6 +7,7 @@ from view.hauptoberflaeche import hauptoberflaeche
 
 
 class login_view(hauptoberflaeche):
+    """Login form with convenience accessors for user input."""
     def __init__(self):
         super().__init__()
         self.setObjectName("login_view")

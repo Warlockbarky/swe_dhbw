@@ -1,8 +1,18 @@
+"""Helpers for normalizing and presenting file metadata."""
+
 from datetime import datetime
 from pathlib import Path
 
 
 def normalize_file_records(data):
+    """Normalize API responses into a consistent file record structure.
+
+    Args:
+        data: Raw API payload.
+
+    Returns:
+        list[dict]: Normalized file record dictionaries.
+    """
     if not isinstance(data, list):
         return []
 
@@ -38,6 +48,14 @@ def normalize_file_records(data):
 
 
 def parse_iso_datetime(value) -> datetime:
+    """Parse various ISO-like timestamp formats with safe fallback.
+
+    Args:
+        value: Timestamp value or ISO-like string.
+
+    Returns:
+        datetime: Parsed timestamp or datetime.min on failure.
+    """
     if not value:
         return datetime.min
     if isinstance(value, datetime):
@@ -46,6 +64,7 @@ def parse_iso_datetime(value) -> datetime:
         text = str(value).replace("Z", "+00:00")
         return datetime.fromisoformat(text)
     except (ValueError, TypeError):
+        # Keep sorting deterministic even for malformed timestamps.
         return datetime.min
 
 
@@ -55,6 +74,14 @@ def file_extension(name: str) -> str:
 
 
 def format_size(value) -> str:
+    """Return a human-readable file size string.
+
+    Args:
+        value: File size in bytes.
+
+    Returns:
+        str: Human-friendly size label or empty string when unknown.
+    """
     try:
         size = int(value)
     except (TypeError, ValueError):
@@ -71,6 +98,14 @@ def format_size(value) -> str:
 
 
 def format_date(value) -> str:
+    """Return a compact date string or empty string when unknown.
+
+    Args:
+        value: Datetime or ISO-like string.
+
+    Returns:
+        str: Formatted date label or empty string when unavailable.
+    """
     if not value:
         return ""
     if isinstance(value, datetime):

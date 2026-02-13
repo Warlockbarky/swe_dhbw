@@ -1,3 +1,5 @@
+"""File list view with sorting, filtering, and batch actions."""
+
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -19,6 +21,7 @@ from view.hauptoberflaeche import hauptoberflaeche
 
 
 class datei_liste_view(hauptoberflaeche):
+    """Displays remote files and exposes selection helpers."""
     request_details = pyqtSignal(int)
     request_open = pyqtSignal(int)
     sort_changed = pyqtSignal(str)

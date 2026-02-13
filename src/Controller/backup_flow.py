@@ -1,4 +1,8 @@
+"""Backup flow for validating path selection and triggering backup."""
+
+
 class backup_flow:
+    """Validates the target path before executing the backup."""
     def __init__(self, controller):
         self.controller = controller
 

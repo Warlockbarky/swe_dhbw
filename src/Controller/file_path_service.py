@@ -1,7 +1,18 @@
+"""Utilities for resolving a writable download directory."""
+
 from pathlib import Path
 
 
 def resolve_download_dir(settings, view) -> Path | None:
+    """Pick a writable download directory or report an error via the view.
+
+    Args:
+        settings: QSettings-like object for persisted preferences.
+        view: View instance used to surface errors.
+
+    Returns:
+        Path | None: Resolved directory path or None when unavailable.
+    """
     configured = settings.value("files/default_dir", "", type=str).strip()
     candidates = []
     if configured:

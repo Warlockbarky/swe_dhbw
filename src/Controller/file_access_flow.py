@@ -1,3 +1,5 @@
+"""File download and local open operations."""
+
 from datetime import datetime
 from pathlib import Path
 
@@ -10,6 +12,7 @@ from controller.file_utils import format_date, format_size
 
 
 class file_access_flow:
+    """Handles downloading files and opening cached local copies."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -101,6 +104,14 @@ class file_access_flow:
             self.controller.datei_liste_view.show_error("Datei konnte nicht geoeffnet werden.")
 
     def get_local_file_info(self, record: dict) -> dict:
+        """Return local metadata if a cached file exists, otherwise empty dict.
+
+        Args:
+            record (dict): File record with name and id fields.
+
+        Returns:
+            dict: Size/created metadata or an empty dict when missing.
+        """
         target_dir = resolve_download_dir(self.controller.settings, self.controller.datei_liste_view)
         if target_dir is None:
             return {}
@@ -139,6 +150,7 @@ class file_access_flow:
             return None
         dest = target / safe_name
         if dest.exists():
+            # Reuse cached files to avoid redundant downloads.
             return dest
 
         try:

@@ -1,3 +1,5 @@
+"""Chat history view for browsing and managing past sessions."""
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -13,6 +15,7 @@ from view.hauptoberflaeche import hauptoberflaeche
 
 
 class chat_history_view(hauptoberflaeche):
+    """Lists chat sessions and exposes selection helpers."""
     request_open = pyqtSignal(int)
     sort_changed = pyqtSignal(str)
     request_rename = pyqtSignal()

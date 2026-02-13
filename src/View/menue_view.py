@@ -1,3 +1,5 @@
+"""Splash/start screen with animated greeting."""
+
 import math
 
 from PyQt6.QtCore import Qt, QTimer
@@ -8,6 +10,7 @@ from view.hauptoberflaeche import hauptoberflaeche
 
 
 class gradient_label(QLabel):
+    """Animated gradient text label for the splash greeting."""
     def __init__(self, text: str = "", parent=None):
         super().__init__(text, parent)
         self._phase = 0.0
@@ -46,6 +49,7 @@ class gradient_label(QLabel):
 
 
 class menue_view(hauptoberflaeche):
+    """Splash screen that transitions into the login view."""
     def __init__(self):
         super().__init__()
         self._dot_timer = QTimer(self)
@@ -73,6 +77,7 @@ class menue_view(hauptoberflaeche):
     def __menue_fenster_erstellen(self):
         self.__oberflaeche_bauen()
         self.mittig_auf_bildschirm()
+
     def __oberflaeche_bauen(self):
         row_layout = QHBoxLayout(self.greeting_row)
         row_layout.setContentsMargins(0, 0, 0, 0)

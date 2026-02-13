@@ -1,9 +1,12 @@
+"""Chat flow that manages background AI requests."""
+
 from PyQt6.QtCore import QThread
 
 from controller.chat_worker import chat_worker
 
 
 class chat_core_flow:
+    """Coordinates chat session state and background worker lifecycle."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -61,7 +64,17 @@ class chat_core_flow:
         self.controller.stack.setCurrentWidget(self.controller.datei_liste_view)
 
     def start_chat_worker(self, *, mode: str, payload: dict):
+        """Start a background worker to avoid blocking the UI thread.
+
+        Args:
+            mode (str): Worker mode identifier.
+            payload (dict): Serialized request payload for the worker.
+
+        Returns:
+            None
+        """
         if self.controller._chat_thread is not None and self.controller._chat_thread.isRunning():
+            # Prevent concurrent workers from racing against shared UI state.
             return
         thread = QThread()
         worker = chat_worker(

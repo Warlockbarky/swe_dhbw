@@ -1,3 +1,6 @@
+"""Custom exception hierarchy for application-specific errors."""
+
+
 class app_error(Exception):
     """Basisklasse für alle Anwendungsfehler."""
 

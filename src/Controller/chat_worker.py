@@ -1,3 +1,5 @@
+"""Background worker for chat requests and file text extraction."""
+
 import io
 
 from PyPDF2 import PdfReader
@@ -7,6 +9,19 @@ from controller.ki_analyzer import ki_analyzer
 
 
 def extract_text_from_downloaded_content(*, file_name: str, content_type: str, content_bytes: bytes) -> str:
+    """Extract readable text from a downloaded file payload.
+
+    Args:
+        file_name (str): Name used to infer file type.
+        content_type (str): HTTP content type header value.
+        content_bytes (bytes): Raw response body.
+
+    Returns:
+        str: Extracted text content.
+
+    Raises:
+        RuntimeError: If no readable text can be extracted.
+    """
     if file_name.lower().endswith(".pdf") or content_type.startswith("application/pdf"):
         reader = PdfReader(io.BytesIO(content_bytes))
         pages = [(page.extract_text() or "").strip() for page in reader.pages]
@@ -21,6 +36,7 @@ def extract_text_from_downloaded_content(*, file_name: str, content_type: str, c
 
 
 class chat_worker(QObject):
+    """Runs chat requests off the UI thread and emits results via signals."""
     finished = pyqtSignal(dict)
     failed = pyqtSignal(str)
 

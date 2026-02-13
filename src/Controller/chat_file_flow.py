@@ -1,3 +1,5 @@
+"""File selection and context building for chat prompts."""
+
 import requests
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -12,6 +14,7 @@ from controller.chat_worker import extract_text_from_downloaded_content
 
 
 class chat_file_flow:
+    """Builds per-file context payloads for chat requests."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -117,6 +120,18 @@ class chat_file_flow:
         return contexts
 
     def download_file_text(self, file_id: str | int, name: str) -> str:
+        """Download and extract text for use in chat context.
+
+        Args:
+            file_id (str | int): Backend file identifier.
+            name (str): Display name used for file-type detection.
+
+        Returns:
+            str: Extracted text content for prompt context.
+
+        Raises:
+            RuntimeError: If the file cannot be downloaded or parsed.
+        """
         resp = requests.get(
             f"{self.controller.api_base_url}/files/{file_id}/download",
             headers={"Authorization": f"Bearer {self.controller.auth_token}"},
@@ -136,6 +151,7 @@ class chat_file_flow:
             content_type=resp.headers.get("Content-Type", "").lower(),
             content_bytes=resp.content,
         )
+        # Limit context size to keep requests within practical prompt budgets.
         max_chars = 12000
         return content[:max_chars]
 

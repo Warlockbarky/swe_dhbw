@@ -1,9 +1,12 @@
+"""Folder selection dialog for choosing the working directory."""
+
 from PyQt6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 from view.hauptoberflaeche import hauptoberflaeche
 
 
 class pfad_view(hauptoberflaeche):
+    """Path selection view with validation-ready input."""
     def __init__(self):
         super().__init__()
         self.path_edit = QLineEdit()

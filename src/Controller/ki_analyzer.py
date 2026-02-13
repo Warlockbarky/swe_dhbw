@@ -1,3 +1,5 @@
+"""OpenAI chat client wrapper with retry logic."""
+
 from __future__ import annotations
 
 import os
@@ -32,6 +34,11 @@ class ki_analyzer:
         self._modell = (modell or os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip()
 
     def _load_dotenv(self) -> None:
+        """Load dotenv values to allow local dev without external tooling.
+
+        Returns:
+            None
+        """
         candidates = [Path.cwd() / ".env", Path(__file__).resolve().parents[2] / ".env"]
         for path in candidates:
             if not path.exists():
@@ -56,6 +63,19 @@ class ki_analyzer:
         return self._call_openai_chat_messages(messages=messages, temperature=temperature)
 
     def _call_openai_chat_messages(self, *, messages: list[dict[str, str]], temperature: float) -> str:
+        """Send chat messages to the OpenAI API with bounded retry backoff.
+
+        Args:
+            messages (list[dict[str, str]]): Chat payload in OpenAI format.
+            temperature (float): Sampling temperature for the model.
+
+        Returns:
+            str: Assistant response text.
+
+        Raises:
+            ValueError: If the API key is missing.
+            RuntimeError: If the API request fails after retries.
+        """
         if not self._api_key:
             raise ValueError(
                 "OPENAI_API_KEY is not set. Please set the OPENAI_API_KEY environment variable to use the OpenAI API."

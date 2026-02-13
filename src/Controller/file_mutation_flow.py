@@ -1,3 +1,5 @@
+"""File upload, delete, and sync operations."""
+
 from pathlib import Path
 
 import requests
@@ -7,6 +9,7 @@ from controller.file_path_service import resolve_download_dir
 
 
 class file_mutation_flow:
+    """Handles mutating file operations against the backend API."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -135,6 +138,11 @@ class file_mutation_flow:
             self.controller.datei_liste_view.show_error("\n".join(errors))
 
     def sync_files_to_folder(self):
+        """Best-effort local cache sync for visible files.
+
+        Returns:
+            None
+        """
         target = resolve_download_dir(self.controller.settings, self.controller.datei_liste_view)
         if target is None:
             return
@@ -152,6 +160,7 @@ class file_mutation_flow:
             safe_name = Path(name).name or f"file_{file_id}"
             dest = self.controller.datei_manager.get_zielpfad() / safe_name
             if dest.exists():
+                # Skip already cached files to keep sync cheap.
                 continue
 
             try:

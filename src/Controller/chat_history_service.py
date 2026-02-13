@@ -1,3 +1,5 @@
+"""Persistence wrapper for chat history stored in QSettings."""
+
 import json
 from datetime import datetime
 
@@ -5,14 +7,21 @@ from PyQt6.QtCore import QSettings
 
 
 class chat_history_service:
+    """Stores and retrieves chat history entries from QSettings."""
     def __init__(self, settings: QSettings):
         self.settings = settings
 
     def load(self) -> list[dict]:
+        """Load raw history list; returns empty list on parse errors.
+
+        Returns:
+            list[dict]: Stored chat history entries.
+        """
         raw = self.settings.value("chat/history", "[]", type=str)
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
+            # Corrupted settings should not break the UI; treat as empty history.
             return []
         if isinstance(data, list):
             return data

@@ -1,8 +1,11 @@
+"""Base UI surface that centralizes theming helpers."""
+
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QWidget
 
 
 class hauptoberflaeche(QWidget):
+    """Shared base view with theming and message helpers."""
     def __init__(self, title: str = "", width: int = 1200, height: int = 800):
         super().__init__()
         self.setObjectName("MainWindow")

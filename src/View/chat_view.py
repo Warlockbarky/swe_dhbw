@@ -1,3 +1,5 @@
+"""Chat UI with streaming assistant responses and sizing logic."""
+
 import math
 
 from PyQt6.QtCore import Qt, QTimer
@@ -18,6 +20,7 @@ from view.hauptoberflaeche import hauptoberflaeche
 
 
 class chat_view(hauptoberflaeche):
+    """Chat view that renders message bubbles and streaming output."""
     def __init__(self):
         super().__init__()
         self.btn_back = QPushButton("Zurueck")
@@ -255,6 +258,14 @@ class chat_view(hauptoberflaeche):
 
     @staticmethod
     def _sync_message_size(view: QTextBrowser):
+        """Keep bubbles aligned and bounded for readability and layout stability.
+
+        Args:
+            view (QTextBrowser): Message widget to size and clamp.
+
+        Returns:
+            None
+        """
         doc = view.document()
         doc.setTextWidth(-1)
         doc_width = int(doc.idealWidth())

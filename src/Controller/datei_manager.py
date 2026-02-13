@@ -1,3 +1,5 @@
+"""Path validation and local file writing utilities."""
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,6 +14,7 @@ class pfad_result:
     msg: str = ""
 
 class datei_manager:
+    """Validates target folders and writes downloaded files to disk."""
     def __init__(self, validator: pfad_validator):
         self._validator = validator
         self._zielpfad: Path | None = None

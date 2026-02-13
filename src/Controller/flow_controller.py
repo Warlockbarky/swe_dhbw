@@ -1,3 +1,5 @@
+"""UI composition root that wires views, flows, and services."""
+
 import sys
 
 from PyQt6.QtCore import QSettings
@@ -29,6 +31,7 @@ from controller.backup_flow import backup_flow
 
 
 class flow_controller:
+    """Central coordinator that owns shared state and signal wiring."""
     def __init__(self):
         self.app = QApplication(sys.argv)
 

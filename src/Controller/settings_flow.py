@@ -1,7 +1,10 @@
+"""Settings flow for UI preferences and user-specific defaults."""
+
 from view.settings_dialog import settings_dialog
 
 
 class settings_flow:
+    """Manages settings dialogs and applies persisted UI preferences."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -53,6 +56,11 @@ class settings_flow:
         self.apply_theme_values(self.get_settings_values())
 
     def build_ai_preferences(self) -> str:
+        """Compose a stable prompt prefix from UI settings for AI requests.
+
+        Returns:
+            str: A multi-line preferences block for AI prompts.
+        """
         values = self.get_settings_values()
         parts = [
             f"Tone: {values.get('ai_tone', 'Neutral')}",

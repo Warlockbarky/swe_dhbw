@@ -1,9 +1,12 @@
+"""Authentication flow that talks to the backend API."""
+
 import requests
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMessageBox
 
 
 class auth_flow:
+    """Handles login, registration, and session lifecycle for the UI."""
     def __init__(self, controller):
         self.controller = controller
 
@@ -24,6 +27,11 @@ class auth_flow:
         QTimer.singleShot(2200, self.start_login)
 
     def on_login_clicked(self):
+        """Authenticate against the backend and seed local session state.
+
+        Returns:
+            None
+        """
         username = self.controller.login_view.get_username()
         password = self.controller.login_view.get_password()
 
@@ -68,6 +76,11 @@ class auth_flow:
         )
 
     def on_register_clicked(self):
+        """Register a new user via the backend API.
+
+        Returns:
+            None
+        """
         username = self.controller.login_view.get_username()
         password = self.controller.login_view.get_password()
 
@@ -138,6 +151,7 @@ class auth_flow:
         password = self.controller.login_view.get_password()
         if not username or not password:
             return
+        # Defer to the event loop so UI updates complete before the request starts.
         QTimer.singleShot(0, self.on_login_clicked)
 
     def save_credentials(self, username: str, password: str):

@@ -1,9 +1,12 @@
+"""Filesystem path validation helpers."""
+
 import os
 from pathlib import Path
 
 from model import fehlertyp
 
 class pfad_validator:
+    """Checks path existence, permissions, and available space."""
     def pruefe_pfad(self, p: Path):
         if not p.exists() or not p.is_dir():
             return False, fehlertyp.pfad_fehler, "Pfad existiert nicht oder ist kein Ordner."
