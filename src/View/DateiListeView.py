@@ -3,9 +3,11 @@ import os
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QMenu,
@@ -19,6 +21,8 @@ from View.Hauptoberflaeche import Hauptoberflaeche
 class DateiListeView(Hauptoberflaeche):
     request_details = pyqtSignal(int)
     request_open = pyqtSignal(int)
+    sort_changed = pyqtSignal(str)
+    search_changed = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -32,6 +36,19 @@ class DateiListeView(Hauptoberflaeche):
         self.btn_delete = QPushButton("Delete")
         self.btn_ai_summary = QPushButton("KI Chat")
         self.btn_select_all = QPushButton("Alle auswaehlen")
+        self.sort_combo = QComboBox()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Datei suchen...")
+        self.sort_combo.addItems(
+            [
+                "Name (A-Z)",
+                "Name (Z-A)",
+                "Datum (neu-alt)",
+                "Datum (alt-neu)",
+                "Format (A-Z)",
+                "Format (Z-A)",
+            ]
+        )
         self.btn_upload.setObjectName("PrimaryButton")
         self.btn_download.setObjectName("SecondaryButton")
         self.btn_delete.setObjectName("DangerButton")
@@ -46,6 +63,8 @@ class DateiListeView(Hauptoberflaeche):
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.__show_context_menu)
         self.list_widget.itemDoubleClicked.connect(self.__on_item_double_clicked)
+        self.sort_combo.currentTextChanged.connect(self.sort_changed.emit)
+        self.search_input.textChanged.connect(self.search_changed.emit)
         self.__fenster_erstellen()
 
     def __fenster_erstellen(self):
@@ -54,6 +73,8 @@ class DateiListeView(Hauptoberflaeche):
         sidebar = QVBoxLayout(sidebar_frame)
         sidebar.setContentsMargins(12, 12, 12, 12)
         sidebar.setSpacing(8)
+        sidebar.addWidget(self.search_input)
+        sidebar.addWidget(self.sort_combo)
         sidebar.addWidget(self.btn_refresh)
         sidebar.addWidget(self.btn_history)
         sidebar.addWidget(self.btn_upload)
@@ -107,6 +128,12 @@ class DateiListeView(Hauptoberflaeche):
 
     def get_btn_select_all(self):
         return self.btn_select_all
+
+    def get_sort_mode(self) -> str:
+        return self.sort_combo.currentText()
+
+    def get_search_query(self) -> str:
+        return self.search_input.text().strip()
 
     def get_selected_index(self) -> int:
         return self.list_widget.currentRow()

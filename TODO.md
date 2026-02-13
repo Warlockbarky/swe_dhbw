@@ -25,7 +25,7 @@
    - Zeilenabstand in den Antworten der KI und in den Nachrichten des Benutzers erhöhen.
    - Design und Benutzererfahrung im KI-Chat-Fenster insgesamt verbessern.
 
-7. **Sortier- und Umbenennungsfunktionen hinzufügen**
+7. **Sortier- und Umbenennungsfunktionen hinzufügen** (done)
    - Möglichkeit hinzufügen, Dateien nach Datum, Name und Dateiformat zu sortieren.
    - Möglichkeit hinzufügen, Chats nach Datum und Name zu sortieren sowie Chats umzubenennen.
 

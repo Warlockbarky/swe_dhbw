@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
+    QInputDialog,
     QLabel,
     QListWidget,
     QMessageBox,
@@ -127,6 +128,9 @@ class FlowController:
         self.auth_token = None
         self.current_username = None
         self.file_records = []
+        self.visible_file_records = []
+        self.file_sort_mode = "Name (A-Z)"
+        self.file_search_query = ""
         self.ki_analyzer = KIAnalyzer()
         self.chat_messages = []
         self.current_chat_id = None
@@ -134,6 +138,9 @@ class FlowController:
         self.chat_started = False
         self.chat_file_context = []
         self.chat_file_meta = []
+        self.visible_history_entries = []
+        self.history_sort_mode = "Datum (neu-alt)"
+        self.history_search_query = ""
         self._chat_thread = None
         self._chat_worker = None
         self.settings = QSettings("swe_dhbw", "swe_dhbw")
@@ -183,6 +190,8 @@ class FlowController:
         self.datei_liste_view.get_btn_select_all().clicked.connect(self.__on_files_select_all_clicked)
         self.datei_liste_view.request_open.connect(self.__on_file_open_requested)
         self.datei_liste_view.request_details.connect(self.__on_file_details_requested)
+        self.datei_liste_view.sort_changed.connect(self.__on_file_sort_changed)
+        self.datei_liste_view.search_changed.connect(self.__on_file_search_changed)
 
         self.chat_view.get_btn_send().clicked.connect(self.__on_chat_send_clicked)
         self.chat_view.get_btn_back().clicked.connect(self.__on_chat_back_clicked)
@@ -194,6 +203,9 @@ class FlowController:
         self.history_view.get_btn_select_all().clicked.connect(self.__on_history_select_all_clicked)
         self.history_view.get_btn_back().clicked.connect(self.__on_history_back_clicked)
         self.history_view.request_open.connect(self.__on_history_open_requested)
+        self.history_view.sort_changed.connect(self.__on_history_sort_changed)
+        self.history_view.request_rename.connect(self.__on_history_rename_clicked)
+        self.history_view.search_changed.connect(self.__on_history_search_changed)
 
         self.pfad_view.get_btn_ok().clicked.connect(self.__on_pfad_ok)
 
@@ -265,6 +277,8 @@ class FlowController:
         self.auth_token = None
         self.current_username = None
         self.file_records = []
+        self.visible_file_records = []
+        self.visible_history_entries = []
         self.settings.remove("auth")
         self.datei_liste_view.set_items([])
         self.login_view.set_username("")
@@ -350,8 +364,7 @@ class FlowController:
         if resp.status_code == 200:
             data = resp.json()
             self.file_records = self.__normalize_file_records(data)
-            items = self.__format_file_labels(self.file_records)
-            self.datei_liste_view.set_items(items)
+            self.__refresh_file_list_view()
             self.chat_messages = []
             self.current_chat_id = None
             self.chat_file_context = []
@@ -408,6 +421,67 @@ class FlowController:
         return records
 
     @staticmethod
+    def __parse_iso_datetime(value) -> datetime:
+        if not value:
+            return datetime.min
+        if isinstance(value, datetime):
+            return value
+        try:
+            text = str(value).replace("Z", "+00:00")
+            return datetime.fromisoformat(text)
+        except (ValueError, TypeError):
+            return datetime.min
+
+    @staticmethod
+    def __file_extension(name: str) -> str:
+        suffix = Path(name or "").suffix.lower()
+        return suffix[1:] if suffix.startswith(".") else suffix
+
+    def __sorted_file_records(self, records: list[dict]) -> list[dict]:
+        mode = self.file_sort_mode
+        sorted_records = list(records)
+
+        if mode == "Name (Z-A)":
+            sorted_records.sort(key=lambda r: str(r.get("name") or "").lower(), reverse=True)
+            return sorted_records
+        if mode == "Datum (neu-alt)":
+            sorted_records.sort(
+                key=lambda r: self.__parse_iso_datetime(r.get("created_at") or r.get("updated_at")),
+                reverse=True,
+            )
+            return sorted_records
+        if mode == "Datum (alt-neu)":
+            sorted_records.sort(
+                key=lambda r: self.__parse_iso_datetime(r.get("created_at") or r.get("updated_at")),
+            )
+            return sorted_records
+        if mode == "Format (A-Z)":
+            sorted_records.sort(key=lambda r: self.__file_extension(str(r.get("name") or "")))
+            return sorted_records
+        if mode == "Format (Z-A)":
+            sorted_records.sort(
+                key=lambda r: self.__file_extension(str(r.get("name") or "")),
+                reverse=True,
+            )
+            return sorted_records
+
+        sorted_records.sort(key=lambda r: str(r.get("name") or "").lower())
+        return sorted_records
+
+    def __refresh_file_list_view(self):
+        sorted_records = self.__sorted_file_records(self.file_records)
+        query = self.file_search_query.strip().lower()
+        if query:
+            sorted_records = [
+                record
+                for record in sorted_records
+                if query in str(record.get("name") or "").lower()
+            ]
+        self.visible_file_records = sorted_records
+        items = self.__format_file_labels(self.visible_file_records)
+        self.datei_liste_view.set_items(items)
+
+    @staticmethod
     def __format_file_labels(records):
         items = []
         for record in records:
@@ -455,11 +529,11 @@ class FlowController:
             return
 
         idx = self.datei_liste_view.get_selected_index()
-        if idx < 0 or idx >= len(self.file_records):
+        if idx < 0 or idx >= len(self.visible_file_records):
             self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
             return
 
-        record = self.file_records[idx]
+        record = self.visible_file_records[idx]
         file_id = record.get("id")
         if file_id is None:
             self.datei_liste_view.show_error("Ausgewaehlter Eintrag hat keine Datei-ID.")
@@ -512,11 +586,11 @@ class FlowController:
         )
 
     def __on_file_details_requested(self, row: int):
-        if row < 0 or row >= len(self.file_records):
+        if row < 0 or row >= len(self.visible_file_records):
             self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
             return
 
-        record = self.file_records[row]
+        record = self.visible_file_records[row]
         name = record.get("name") or "Datei"
         file_id = record.get("id")
         local_info = self.__get_local_file_info(record)
@@ -678,8 +752,8 @@ class FlowController:
 
         records = []
         for row in selected_rows:
-            if 0 <= row < len(self.file_records):
-                records.append(self.file_records[row])
+            if 0 <= row < len(self.visible_file_records):
+                records.append(self.visible_file_records[row])
 
         if not records:
             self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
@@ -748,15 +822,23 @@ class FlowController:
         if not self.auth_token:
             self.datei_liste_view.show_error("Bitte zuerst einloggen.")
             return
-        if row < 0 or row >= len(self.file_records):
+        if row < 0 or row >= len(self.visible_file_records):
             self.datei_liste_view.show_error("Bitte eine Datei aus der Liste auswaehlen.")
             return
-        record = self.file_records[row]
+        record = self.visible_file_records[row]
         local_path = self.__ensure_local_file(record)
         if local_path is None:
             return
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(local_path))):
             self.datei_liste_view.show_error("Datei konnte nicht geoeffnet werden.")
+
+    def __on_file_sort_changed(self, mode: str):
+        self.file_sort_mode = mode
+        self.__refresh_file_list_view()
+
+    def __on_file_search_changed(self, query: str):
+        self.file_search_query = query or ""
+        self.__refresh_file_list_view()
 
     def __on_ai_summary_clicked(self):
         if not self.auth_token:
@@ -812,14 +894,13 @@ class FlowController:
         self.stack.setCurrentWidget(self.datei_liste_view)
 
     def __on_history_clicked(self):
-        items = self.__format_history_items(self.__load_history())
-        self.history_view.set_items(items)
+        self.__refresh_history_view()
         self.stack.setCurrentWidget(self.history_view)
 
     def __on_history_open_clicked(self):
         self.is_temp_chat = False
         self.chat_started = True
-        history = self.__load_history()
+        history = self.visible_history_entries
         idx = self.history_view.get_selected_index()
         if idx < 0 or idx >= len(history):
             self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
@@ -827,7 +908,7 @@ class FlowController:
         self.__open_history_entry(history, idx)
 
     def __on_history_open_requested(self, row: int):
-        history = self.__load_history()
+        history = self.visible_history_entries
         if row < 0 or row >= len(history):
             self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
             return
@@ -864,7 +945,7 @@ class FlowController:
         self.chat_view.set_temp_chat_enabled(False)
 
     def __on_history_delete_clicked(self):
-        history = self.__load_history()
+        history = self.visible_history_entries
         checked_rows = self.history_view.get_checked_indices()
         selected_rows = self.history_view.get_selected_indices()
         selected_rows = sorted(set(checked_rows or selected_rows))
@@ -894,10 +975,9 @@ class FlowController:
             return
 
         removed_ids = {entry.get("id") for entry in entries}
-        for row in sorted(selected_rows, reverse=True):
-            if 0 <= row < len(history):
-                history.pop(row)
-        self.__save_history(history)
+        saved_history = self.__load_history()
+        remaining = [entry for entry in saved_history if entry.get("id") not in removed_ids]
+        self.__save_history(remaining)
         if self.current_chat_id in removed_ids:
             self.current_chat_id = None
             self.chat_messages = []
@@ -905,11 +985,89 @@ class FlowController:
             self.chat_file_meta = []
             self.chat_view.clear_chat()
             self.chat_view.set_selected_files([])
-        self.history_view.set_items(self.__format_history_items(history))
+        self.__refresh_history_view()
 
     def __on_history_select_all_clicked(self):
         select_all = not self.history_view.are_all_checked()
         self.history_view.set_all_checked(select_all)
+
+    def __on_history_sort_changed(self, mode: str):
+        self.history_sort_mode = mode
+        self.__refresh_history_view()
+
+    def __on_history_search_changed(self, query: str):
+        self.history_search_query = query or ""
+        self.__refresh_history_view()
+
+    def __on_history_rename_clicked(self):
+        history = self.visible_history_entries
+        idx = self.history_view.get_selected_index()
+        if idx < 0 or idx >= len(history):
+            self.history_view.show_error("Bitte einen Verlauf auswaehlen.")
+            return
+
+        entry = history[idx]
+        chat_id = entry.get("id")
+        current_title = (entry.get("title") or "Chat").strip()
+        new_title, accepted = QInputDialog.getText(
+            self.history_view,
+            "Chat umbenennen",
+            "Neuer Name:",
+            text=current_title,
+        )
+        if not accepted:
+            return
+
+        new_title = new_title.strip()
+        if not new_title:
+            self.history_view.show_error("Der Chatname darf nicht leer sein.")
+            return
+
+        saved_history = self.__load_history()
+        renamed = False
+        for item in saved_history:
+            if item.get("id") == chat_id:
+                item["title"] = new_title
+                item["updated_at"] = datetime.now().isoformat(timespec="seconds")
+                renamed = True
+                break
+
+        if not renamed:
+            self.history_view.show_error("Der Chat konnte nicht gefunden werden.")
+            return
+
+        self.__save_history(saved_history)
+        self.__refresh_history_view()
+
+    def __refresh_history_view(self):
+        history = self.__load_history()
+        sorted_entries = self.__sorted_history_entries(history)
+        query = self.history_search_query.strip().lower()
+        if query:
+            sorted_entries = [
+                entry
+                for entry in sorted_entries
+                if query in str(entry.get("title") or "").lower()
+            ]
+        self.visible_history_entries = sorted_entries
+        self.history_view.set_items(self.__format_history_items(self.visible_history_entries))
+
+    def __sorted_history_entries(self, history: list[dict]) -> list[dict]:
+        entries = list(history)
+        mode = self.history_sort_mode
+
+        if mode == "Datum (alt-neu)":
+            entries.sort(key=lambda e: self.__parse_iso_datetime(e.get("updated_at")))
+            return entries
+        if mode == "Name (A-Z)":
+            entries.sort(key=lambda e: str(e.get("title") or "").lower())
+            return entries
+        if mode == "Name (Z-A)":
+            entries.sort(key=lambda e: str(e.get("title") or "").lower(), reverse=True)
+            return entries
+
+        entries.sort(key=lambda e: self.__parse_iso_datetime(e.get("updated_at")), reverse=True)
+        return entries
 
     def __ensure_local_file(self, record: dict) -> Path | None:
         target = self.__resolve_download_dir()
@@ -1042,7 +1200,7 @@ class FlowController:
         self.__set_chat_files([])
 
     def __prompt_select_files(self) -> list[dict] | None:
-        if not self.file_records:
+        if not self.visible_file_records:
             self.chat_view.show_error("Keine Dateien verfuegbar.")
             return None
 
@@ -1054,7 +1212,7 @@ class FlowController:
         list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
 
         selected_ids = {str(item.get("id")) for item in self.chat_file_meta}
-        for record in self.file_records:
+        for record in self.visible_file_records:
             file_id = record.get("id")
             name = record.get("name") or "Datei"
             label = f"{file_id}: {name}" if file_id is not None else str(name)
@@ -1079,8 +1237,8 @@ class FlowController:
         records = []
         for item in list_widget.selectedIndexes():
             idx = item.row()
-            if 0 <= idx < len(self.file_records):
-                records.append(self.file_records[idx])
+            if 0 <= idx < len(self.visible_file_records):
+                records.append(self.visible_file_records[idx])
         return records
 
     def __set_chat_files(self, records: list[dict]):
