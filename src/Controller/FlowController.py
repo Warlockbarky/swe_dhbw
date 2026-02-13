@@ -344,7 +344,11 @@ class FlowController:
             )
             return
 
-        print("Registrierung erfolgreich. Bitte einloggen.")
+        QMessageBox.information(
+            self.login_view,
+            "Registrierung erfolgreich",
+            "Der Benutzer wurde erfolgreich registriert. Bitte jetzt einloggen.",
+        )
 
     def __load_files_and_show(self):
         if not self.auth_token:
