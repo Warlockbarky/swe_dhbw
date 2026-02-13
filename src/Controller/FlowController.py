@@ -1374,14 +1374,12 @@ class FlowController:
         chat_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.current_chat_id = chat_id
         self.chat_messages = []
-        self.chat_file_context = []
-        self.chat_file_meta = []
         history = self.__load_history()
         history.insert(0, {
             "id": chat_id,
             "title": title,
             "messages": [],
-            "files": [],
+            "files": list(self.chat_file_meta),
             "updated_at": datetime.now().isoformat(timespec="seconds"),
         })
         self.__save_history(history)

@@ -20,19 +20,18 @@
 5. **Temporäre Chats mit KI erstellen**
    - Funktionalität hinzufügen, um temporäre Chats mit der KI zu erstellen. (done)
 
-6. **Design und UX im KI-Chat verbessern**
+6. **Design und UX im KI-Chat verbessern** (done)
    - Animationen bei der Generierung von KI-Antworten überarbeiten.
    - Zeilenabstand in den Antworten der KI und in den Nachrichten des Benutzers erhöhen.
-   - Design und Benutzererfahrung im KI-Chat-Fenster insgesamt verbessern.
 
 7. **Sortier- und Umbenennungsfunktionen hinzufügen** (done)
    - Möglichkeit hinzufügen, Dateien nach Datum, Name und Dateiformat zu sortieren.
    - Möglichkeit hinzufügen, Chats nach Datum und Name zu sortieren sowie Chats umzubenennen.
 
-8. **Design überarbeiten**
+8. **Design überarbeiten** (canceled)
    - Überlegen, wie das Design benutzerfreundlicher, schöner und interessanter gestaltet werden kann.
 
-9. **Personalisierungsmöglichkeiten erweitern**
+9. **Personalisierungsmöglichkeiten erweitern** (canceled)
    - In den Einstellungen mehr Möglichkeiten zur Personalisierung hinzufügen (z. B. die Möglichkeit, beliebige Farben für die Farbpalette auszuwählen, eventuell weitere Themen neben dem hellen und dunklen Modus hinzufügen).
 
 10. **Code-Refactoring durchführen**

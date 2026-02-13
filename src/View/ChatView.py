@@ -222,6 +222,15 @@ class ChatView(Hauptoberflaeche):
         view.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         view.setContentsMargins(0, 0, 0, 0)
         view.document().setDocumentMargin(0)
+        view.document().setDefaultStyleSheet(
+            (
+                "body, p, ul, ol, li { "
+                "margin-top: 0px; "
+                "margin-bottom: 0px; "
+                "line-height: 150%;"
+                " }"
+            )
+        )
         view.document().contentsChanged.connect(
             lambda v=view: self._on_message_contents_changed(v)
         )
@@ -268,7 +277,7 @@ class ChatView(Hauptoberflaeche):
         doc.setTextWidth(target_width)
 
         doc_height = math.ceil(doc.documentLayout().documentSize().height())
-        target_height = doc_height + padding + extra + 4
+        target_height = doc_height + padding + extra
         view.setMinimumHeight(target_height)
         view.setMaximumHeight(target_height)
 
@@ -303,7 +312,10 @@ class ChatView(Hauptoberflaeche):
         step = 3
         self._typing_index = min(self._typing_index + step, len(self._typing_text))
         chunk = self._typing_text[: self._typing_index]
-        self._typing_label.setPlainText(chunk)
+        if self._typing_markdown:
+            self._typing_label.setMarkdown(chunk)
+        else:
+            self._typing_label.setPlainText(chunk)
         self._scroll_to_bottom()
         if self._typing_index >= len(self._typing_text):
             self._typing_timer.stop()
