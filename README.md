@@ -2,6 +2,23 @@
 
 Dieses Projekt enthaelt einen umfangreichen Satz an Tests fuer eine PyQt6 Desktop-Anwendung mit Backend-Kommunikation. Ziel ist eine stabile Abdeckung der Kernlogik und ein realistisches Testniveau fuer ein universitaires Software-Engineering-Projekt.
 
+## Programmstart und Installation (Poetry + venv)
+
+Fuehre im Projekt-Root folgende Befehle aus:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+poetry install
+```
+
+Danach in den `src`-Ordner wechseln und die Anwendung starten:
+
+```bash
+cd src
+python3 main.py
+```
+
 ## Testziele und Abdeckung
 
 Aktueller Fokus:
