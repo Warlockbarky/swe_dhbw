@@ -1,10 +1,17 @@
-# Tests und Qualitaet
+# OMAS Moodle Anwendung
 
-Dieses Projekt enthaelt einen umfangreichen Satz an Tests fuer eine PyQt6 Desktop-Anwendung mit Backend-Kommunikation. Ziel ist eine stabile Abdeckung der Kernlogik und ein realistisches Testniveau fuer ein universitaires Software-Engineering-Projekt.
+OMAS Moodle Anwendung ist eine PyQt6-Desktopanwendung zur Interaktion mit einem Moodle-nahen Backend (Authentifizierung, Dateiverwaltung, Chat- und Verlaufskomponenten).
 
-## Programmstart und Installation (Poetry + venv)
+## Voraussetzungen
 
-Fuehre im Projekt-Root folgende Befehle aus:
+Fuer den produktiven Programmbetrieb wird ein separater Backend-API-Server benoetigt.
+
+- Backend-Repository: [Warlockbarky/swe_dhbw_api](https://github.com/Warlockbarky/swe_dhbw_api)
+- Wichtig: Backend zuerst starten, danach diese Desktopanwendung ausfuehren.
+
+## Installation und Start (Poetry + venv)
+
+Im Projekt-Root:
 
 ```bash
 python3 -m venv .venv
@@ -12,86 +19,35 @@ source .venv/bin/activate
 poetry install
 ```
 
-Danach in den `src`-Ordner wechseln und die Anwendung starten:
+Anwendung starten:
 
 ```bash
 cd src
 python3 main.py
 ```
 
-## Testziele und Abdeckung
+## Tests und Qualitaet
 
-Aktueller Fokus:
+Das Projekt enthaelt einen breiten Testmix fuer Controller-Logik, Services, GUI-Verhalten und End-to-End-Pfade gegen ein lokales Fake-Backend.
 
-- Hohe Abdeckung der Controller-Logik
-- Stabile Unit-Tests fuer Hilfsfunktionen und Services
-- GUI-Tests fuer zentrale Views
-- Systemtests gegen ein lokales Fake-Backend
-- Akzeptanztests mit klaren Annahmen
+- Aktuelle Coverage: ca. 80%
+- Messung: `pytest --cov=src --cov-report=term-missing`
 
-Die Coverage liegt bei 80% und wird mit `pytest --cov=src --cov-report=term-missing` gemessen.
+### Testarten (Kurzueberblick)
 
-## Testtypen (11 Kategorien)
-
-1. Assertions / Contract Checks
-
-- Status: Teilweise.
-- Warum: Der Produktivcode wurde bewusst nicht um Runtime-Assertions ergaenzt.
-- Alternative: Invarianten werden durch Tests abgesichert (z. B. Normalisierung von API-Payloads, Guard-Clauses bei fehlenden IDs).
-
-2. Unit Tests
-
-- Status: Ja.
-- Beispiele: Utilities, Validatoren, Controller-Methoden, Settings/History-Services.
-
-3. Mocks & Stubs (Testbarkeit externer Abhaengigkeiten)
-
-- Status: Ja.
-- Verwendet fuer HTTP-Aufrufe, Dateisystem und QSettings-Logik.
-
-4. Equivalence Class Tests
-
-- Status: Ja.
-- Beispiele: verschiedene Datumsformate, unterschiedliche API-Record-Varianten, gueltige/ungueltige Pfade.
-
-5. Boundary Value Tests
-
-- Status: Ja.
-- Beispiele: leere Strings, fehlende Felder, kleine/grosse Dateigroessen, Min-Speicherplatz.
-
-6. Control-Flow Coverage Tests
-
-- Status: Teilweise, aber mit hohem Ziel.
-- Messung: Coverage-Report per `pytest-cov`.
-- Restluecken: GUI-Logik und Threading-Pfade lassen sich nicht vollstaendig automatisieren ohne UI-Automation auf Systemebene.
-
-7. Integration Tests
-
-- Status: Teilweise.
-- Beispiel: Sync-Logik und File-Download mit lokalen Pfaden.
-
-8. System Tests (End-to-End)
-
-- Status: Teilweise.
-- Umgesetzt: Systemtests gegen ein lokales Fake-Backend (HTTP).
-- Nicht umgesetzt: Komplettsystem mit echtem Backend und GUI-Automation (zu hoher Infrastrukturaufwand fuer das Projekt).
-
-9. Acceptance Tests
-
-- Status: Teilweise.
-- Annahmen: z. B. Einloggen + Dateiliste laden + Chat-Zustand wird zurueckgesetzt.
-- Grund: Keine formale Spezifikation vom Backend/Stakeholder.
-
-10. Regression Tests
-
-- Status: Ja.
-- Beispiel: Stabiler Umgang mit ungueltigen Datumswerten.
-
-11. Load/Performance Tests
-
-- Status: Teilweise.
-- Umgesetzt: `pytest-benchmark` fuer eine zentrale Funktion.
-- Nicht umgesetzt: Volllasttests (Locust) wegen fehlender realer Backend-Lastumgebung.
+| Bereich                      | Status    | Kurzbeschreibung                                                                             |
+| ---------------------------- | --------- | -------------------------------------------------------------------------------------------- |
+| Assertions / Contract Checks | Teilweise | Invarianten werden ueber Tests abgesichert, nicht ueber Runtime-Assertions im Produktivcode. |
+| Unit-Tests                   | Ja        | Utilities, Validatoren, Controller-Methoden, Settings/History-Services.                      |
+| Mocks & Stubs                | Ja        | Externe Abhaengigkeiten wie HTTP, Dateisystem und QSettings werden isoliert.                 |
+| Equivalence Class Tests      | Ja        | Verschiedene API-/Datums-/Pfadvarianten werden systematisch abgedeckt.                       |
+| Boundary Value Tests         | Ja        | Leere/falsche Werte und Grenzfaelle bei Dateidaten werden geprueft.                          |
+| Control-Flow Coverage        | Teilweise | Hoher Abdeckungsgrad, Restluecken v. a. bei GUI- und Threading-Pfaden.                       |
+| Integrationstests            | Teilweise | Zusammenspiel zentraler Flows, z. B. Sync und Download.                                      |
+| Systemtests (E2E)            | Teilweise | Gegen lokales Fake-Backend; kein Full-Stack mit realem Backend + UI-Automation.              |
+| Akzeptanztests               | Teilweise | Kernannahmen aus Nutzersicht (z. B. Login, Laden, Zustandswechsel).                          |
+| Regressionstests             | Ja        | Reproduktion und Absicherung bekannter Fehlerbilder.                                         |
+| Load/Performance             | Teilweise | Benchmark einer Kernfunktion via `pytest-benchmark`; keine Volllastumgebung.                 |
 
 ## Teststruktur
 
@@ -118,8 +74,8 @@ pip install pytest-benchmark
 pytest tests/performance -q
 ```
 
-## Warum einige Tests nur teilweise moeglich sind
+## Hinweise zur Testabdeckung
 
-- GUI-Apps brauchen oft Systemautomatisierung (Mouse/Keyboard). Das ist im Uni-Setup unnoetig komplex.
-- Ein echtes Backend (Auth, Files, Speicherung) ist nicht Teil dieses Repos. Daher nutzen wir ein Fake-Backend.
-- Threading und Signals in PyQt koennen in Unit-Tests nur eingeschraenkt simuliert werden.
+- GUI-Systemautomation (Maus/Tastatur auf OS-Ebene) ist im Projektumfang bewusst begrenzt.
+- Ein echtes Backend ist nicht Teil dieses Repositories; fuer reproduzierbare Tests wird ein Fake-Backend genutzt.
+- Threading und Qt-Signals lassen sich in klassischen Unit-Tests nur eingeschraenkt realistisch abbilden.
