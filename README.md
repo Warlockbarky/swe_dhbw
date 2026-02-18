@@ -67,6 +67,20 @@ pytest -q
 pytest --cov=src --cov-report=term-missing
 ```
 
+## Konfiguration fuer den KI-Chat (.env)
+
+Damit der KI-Chat korrekt funktioniert, muss im Projekt-Root eine Datei `.env` vorhanden sein.
+
+Beispiel:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=https://api.openai.com/v1
+```
+
+Hinweis: Die `.env` enthaelt sensible Daten (API-Key) und sollte nicht in Git eingecheckt werden.
+
 Optional fuer Performance:
 
 ```bash
